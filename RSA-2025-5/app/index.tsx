@@ -9,21 +9,16 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
-// Simple app with authentication and tab-based navigation
 export default function App() {
-  // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // Current tab
   const [currentTab, setCurrentTab] = useState('Checklist');
-  
-  // Login screen variables
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [users, setUsers] = useState([{ username: 'test', password: 'test' }]);
 
-  // Handle login
   const handleLogin = () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert('Error', 'Please enter both username and password');
@@ -38,7 +33,6 @@ export default function App() {
     }
   };
 
-  // Handle signup
   const handleSignUp = () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert('Error', 'Please enter both username and password');
@@ -55,15 +49,12 @@ export default function App() {
     setIsSigningUp(false);
   };
 
-  // Render login/signup screen
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.authContainer}>
           <Text style={styles.title}>Health Tracker</Text>
-          
           <Text style={styles.subtitle}>{isSigningUp ? 'Create Account' : 'Login'}</Text>
-          
           <TextInput
             style={styles.input}
             placeholder="Username"
@@ -71,7 +62,6 @@ export default function App() {
             onChangeText={setUsername}
             autoCapitalize="none"
           />
-          
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -79,14 +69,12 @@ export default function App() {
             onChangeText={setPassword}
             secureTextEntry
           />
-          
           <TouchableOpacity 
             style={styles.button}
             onPress={isSigningUp ? handleSignUp : handleLogin}
           >
             <Text style={styles.buttonText}>{isSigningUp ? 'Sign Up' : 'Login'}</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity onPress={() => setIsSigningUp(!isSigningUp)}>
             <Text style={styles.switchText}>
               {isSigningUp 
@@ -99,32 +87,11 @@ export default function App() {
     );
   }
 
-  // Render main app with tabs
   return (
     <SafeAreaView style={styles.container}>
-      {/* Content area */}
       <ScrollView style={styles.content}>
         <View style={styles.screenContainer}>
-          {currentTab === 'Checklist' && (
-            <Text style={styles.screenTitle}>Daily Checklist</Text>
-          )}
-          
-          {currentTab === 'Meals' && (
-            <Text style={styles.screenTitle}>Meals Page</Text>
-          )}
-          
-          {currentTab === 'Log' && (
-            <Text style={styles.screenTitle}>Log Page</Text>
-          )}
-          
-          {currentTab === 'Recap' && (
-            <Text style={styles.screenTitle}>Daily Recap</Text>
-          )}
-          
-          {currentTab === 'Settings' && (
-            <Text style={styles.screenTitle}>Settings & Notifications</Text>
-          )}
-          
+          <Text style={styles.screenTitle}>{currentTab} Page</Text>
           <TouchableOpacity 
             style={styles.logoutButton}
             onPress={() => {
@@ -138,42 +105,22 @@ export default function App() {
         </View>
       </ScrollView>
       
-      {/* Tab bar */}
       <View style={styles.tabBar}>
-        <TouchableOpacity 
-          style={[styles.tab, currentTab === 'Checklist' && styles.activeTab]} 
-          onPress={() => setCurrentTab('Checklist')}
-        >
-          <Text style={styles.tabText}>Checklist</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tab, currentTab === 'Meals' && styles.activeTab]} 
-          onPress={() => setCurrentTab('Meals')}
-        >
-          <Text style={styles.tabText}>Meals</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tab, currentTab === 'Log' && styles.activeTab]} 
-          onPress={() => setCurrentTab('Log')}
-        >
-          <Text style={styles.tabText}>Log</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tab, currentTab === 'Recap' && styles.activeTab]} 
-          onPress={() => setCurrentTab('Recap')}
-        >
-          <Text style={styles.tabText}>Recap</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tab, currentTab === 'Settings' && styles.activeTab]} 
-          onPress={() => setCurrentTab('Settings')}
-        >
-          <Text style={styles.tabText}>Settings</Text>
-        </TouchableOpacity>
+        {['Checklist', 'Meals', 'Log', 'Recap', 'Settings'].map(tab => (
+          <TouchableOpacity 
+            key={tab}
+            style={[styles.tab, currentTab === tab && styles.activeTab]} 
+            onPress={() => setCurrentTab(tab)}
+          >
+            <Ionicons name={
+              tab === 'Checklist' ? 'checkbox-outline' : 
+              tab === 'Meals' ? 'fast-food-outline' : 
+              tab === 'Log' ? 'document-text-outline' : 
+              tab === 'Recap' ? 'calendar-outline' : 'settings-outline'
+            } size={20} color={currentTab === tab ? '#3498db' : '#000'} />
+            <Text style={styles.tabText}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </SafeAreaView>
   );
