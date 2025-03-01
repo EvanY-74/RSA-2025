@@ -5,7 +5,7 @@ import {
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  SafeAreaView
+  SafeAreaView 
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,8 +19,7 @@ type Meal = {
   rating: number;
 };
 
-export default function App() {
-  const [currentTab, setCurrentTab] = useState<string>('Checklist');
+export default function ChecklistScreen() {
   const [meals, setMeals] = useState<Meal[]>([
     { id: 1, name: 'Breakfast', checked: false, editing: false, rating: 0 },
     { id: 2, name: 'Lunch', checked: false, editing: false, rating: 0 },
@@ -55,87 +54,64 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
         <View style={styles.screenContainer}>
-          <Text style={styles.screenTitle}>{currentTab} Page</Text>
+          <Text style={styles.screenTitle}>Checklist</Text>
 
-          {currentTab === 'Checklist' && (
-            <>
-              <DraggableFlatList
-                data={meals}
-                keyExtractor={(item) => item.id.toString()}
-                onDragEnd={({ data }) => setMeals(data)}
-                contentContainerStyle={styles.flatListContainer}
-                renderItem={({ item, drag }: RenderItemParams<Meal>) => (
-                  <View key={item.id} style={styles.mealItem}>
-                    {item.editing ? (
-                      <TextInput
-                        style={styles.input}
-                        value={item.name}
-                        onChangeText={(text) => updateMealName(item.id, text)}
-                        onBlur={() => saveEdit(item.id)}
-                        autoFocus
-                      />
-                    ) : (
-                      <TouchableOpacity onPress={() => saveEdit(item.id)}>
-                        <Text style={styles.mealName}>{item.name}</Text>
-                      </TouchableOpacity>
-                    )}
-
-                    <TouchableOpacity onPress={() => toggleCheck(item.id)} style={styles.checkbox}>
-                      <Ionicons name={item.checked ? "checkbox" : "square-outline"} size={24} color="#3498db" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => removeMeal(item.id)}>
-                      <Ionicons name="trash-outline" size={24} color="red" />
-                    </TouchableOpacity>
-
-                    <View style={styles.ratingContainer}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <TouchableOpacity key={star} onPress={() => setRating(item.id, star)}>
-                          <Ionicons 
-                            name={item.rating >= star ? "star" : "star-outline"} 
-                            size={24} 
-                            color={item.rating >= star ? "#f1c40f" : "#ccc"} 
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                    
-                    <TouchableOpacity onLongPress={drag}>
-                      <Ionicons name="reorder-three-outline" size={24} color="#888" style={{ marginLeft: 10 }} />
-                    </TouchableOpacity>
-                  </View>
+          <DraggableFlatList
+            data={meals}
+            keyExtractor={(item) => item.id.toString()}
+            onDragEnd={({ data }) => setMeals(data)}
+            contentContainerStyle={styles.flatListContainer}
+            renderItem={({ item, drag }: RenderItemParams<Meal>) => (
+              <View key={item.id} style={styles.mealItem}>
+                {item.editing ? (
+                  <TextInput
+                    style={styles.input}
+                    value={item.name}
+                    onChangeText={(text) => updateMealName(item.id, text)}
+                    onBlur={() => saveEdit(item.id)}
+                    autoFocus
+                  />
+                ) : (
+                  <TouchableOpacity onPress={() => saveEdit(item.id)}>
+                    <Text style={styles.mealName}>{item.name}</Text>
+                  </TouchableOpacity>
                 )}
-              />
-              
-              <TouchableOpacity style={styles.addMealButton} onPress={addMeal}>
-                <Text style={styles.buttonText}>+ Add Meal</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
 
-        <View style={styles.tabBar}>
-          {['Checklist', 'Meals', 'Log', 'Recap', 'Settings'].map(tab => (
-            <TouchableOpacity 
-              key={tab}
-              style={[styles.tab, currentTab === tab && styles.activeTab]} 
-              onPress={() => setCurrentTab(tab)}
-            >
-              <Ionicons name={
-                tab === 'Checklist' ? 'checkbox-outline' : 
-                tab === 'Meals' ? 'fast-food-outline' : 
-                tab === 'Log' ? 'document-text-outline' : 
-                tab === 'Recap' ? 'calendar-outline' : 'settings-outline'
-              } size={24} color={currentTab === tab ? '#3498db' : '#000'} />
-              <Text style={[styles.tabText, currentTab === tab && { color: '#3498db' }]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
+                <TouchableOpacity onPress={() => toggleCheck(item.id)} style={styles.checkbox}>
+                  <Ionicons name={item.checked ? "checkbox" : "square-outline"} size={24} color="#3498db" />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => removeMeal(item.id)}>
+                  <Ionicons name="trash-outline" size={24} color="red" />
+                </TouchableOpacity>
+
+                <View style={styles.ratingContainer}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity key={star} onPress={() => setRating(item.id, star)}>
+                      <Ionicons 
+                        name={item.rating >= star ? "star" : "star-outline"} 
+                        size={24} 
+                        color={item.rating >= star ? "#f1c40f" : "#ccc"} 
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                
+                <TouchableOpacity onLongPress={drag}>
+                  <Ionicons name="reorder-three-outline" size={24} color="#888" style={{ marginLeft: 10 }} />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+          
+          <TouchableOpacity style={styles.addMealButton} onPress={addMeal}>
+            <Text style={styles.buttonText}>+ Add Meal</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     </GestureHandlerRootView> 
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
@@ -194,32 +170,6 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
     position: 'absolute',
-    bottom: 60,  // Keeping the styling consistent
-  },
-
-  tabBar: { 
-    flexDirection: 'row', 
-    borderTopWidth: 1, 
-    borderTopColor: '#ddd', 
-    backgroundColor: '#fff', 
-    position: 'absolute', 
-    bottom: 0, 
-    width: '100%' 
-  },
-
-  tab: { 
-    flex: 1, 
-    paddingVertical: 15, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-
-  activeTab: { 
-    borderTopWidth: 3, 
-    borderTopColor: '#3498db' 
-  },
-
-  tabText: { 
-    fontSize: 12 
-  },
+    bottom: 60,
+  }
 });
