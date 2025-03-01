@@ -7,6 +7,7 @@ import LogScreen from './log';
 import RecapScreen from './recap';
 import SettingsScreen from './settings';
 
+
 const Tab = createBottomTabNavigator();
 
 export default function Layout() {

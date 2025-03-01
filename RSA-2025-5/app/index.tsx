@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,6 +10,7 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Meal = {
   id: number;
@@ -19,35 +20,76 @@ type Meal = {
   rating: number;
 };
 
+const STORAGE_KEY = 'meals_data';
+
 export default function ChecklistScreen() {
   const [meals, setMeals] = useState<Meal[]>([
     { id: 1, name: 'Breakfast', checked: false, editing: false, rating: 0 },
     { id: 2, name: 'Lunch', checked: false, editing: false, rating: 0 },
     { id: 3, name: 'Dinner', checked: false, editing: false, rating: 0 },
   ]);
+  
+  // Load data from storage when component mounts
+  useEffect(() => {
+    const loadMeals = async () => {
+      try {
+        const storedMeals = await AsyncStorage.getItem(STORAGE_KEY);
+        if (storedMeals !== null) {
+          setMeals(JSON.parse(storedMeals));
+        }
+      } catch (error) {
+        console.error('Failed to load meals from storage', error);
+      }
+    };
+    
+    loadMeals();
+  }, []);
+  
+  // Save data whenever meals change
+  useEffect(() => {
+    const saveMeals = async () => {
+      try {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
+      } catch (error) {
+        console.error('Failed to save meals to storage', error);
+      }
+    };
+    
+    saveMeals();
+  }, [meals]);
 
-  const addMeal = () => {
-    setMeals([...meals, { id: Date.now(), name: 'New Meal', checked: false, editing: true, rating: 0 }]);
+  const addMeal = async () => {
+    const newMeals = [...meals, { id: Date.now(), name: 'New Meal', checked: false, editing: true, rating: 0 }];
+    setMeals(newMeals);
   };
 
-  const removeMeal = (id: number) => {
-    setMeals(meals.filter(meal => meal.id !== id));
+  const removeMeal = async (id: number) => {
+    const newMeals = meals.filter(meal => meal.id !== id);
+    setMeals(newMeals);
   };
 
-  const toggleCheck = (id: number) => {
-    setMeals(meals.map(meal => (meal.id === id ? { ...meal, checked: !meal.checked } : meal)));
+  const toggleCheck = async (id: number) => {
+    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, checked: !meal.checked } : meal));
+    setMeals(newMeals);
   };
 
-  const updateMealName = (id: number, newName: string) => {
-    setMeals(meals.map(meal => (meal.id === id ? { ...meal, name: newName } : meal)));
+  const updateMealName = async (id: number, newName: string) => {
+    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, name: newName } : meal));
+    setMeals(newMeals);
   };
 
-  const saveEdit = (id: number) => {
-    setMeals(meals.map(meal => (meal.id === id ? { ...meal, editing: false } : meal)));
+  const saveEdit = async (id: number) => {
+    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, editing: false } : meal));
+    setMeals(newMeals);
   };
 
-  const setRating = (id: number, rating: number) => {
-    setMeals(meals.map(meal => (meal.id === id ? { ...meal, rating } : meal)));
+  const setRating = async (id: number, rating: number) => {
+    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, rating } : meal));
+    setMeals(newMeals);
+  };
+
+  const handleDragEnd = async ({ data }: { data: Meal[] }) => {
+    setMeals(data);
   };
 
   return (
@@ -59,7 +101,7 @@ export default function ChecklistScreen() {
           <DraggableFlatList
             data={meals}
             keyExtractor={(item) => item.id.toString()}
-            onDragEnd={({ data }) => setMeals(data)}
+            onDragEnd={handleDragEnd}
             contentContainerStyle={styles.flatListContainer}
             renderItem={({ item, drag }: RenderItemParams<Meal>) => (
               <View key={item.id} style={styles.mealItem}>
