@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Slider from '@react-native-community/slider';
+import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
 
 type Meal = {
   id: number;
@@ -23,29 +24,22 @@ type Meal = {
 const STORAGE_KEY = 'meals_data';
 
 export default function ChecklistScreen() {
-  const [meals, setMeals] = useState<Meal[]>([
-    { id: 1, name: 'Breakfast', checked: false, editing: false, rating: 0 },
-    { id: 2, name: 'Lunch', checked: false, editing: false, rating: 0 },
-    { id: 3, name: 'Dinner', checked: false, editing: false, rating: 0 },
-  ]);
-  
-  // Load data from storage when component mounts
+  const [meals, setMeals] = useState<Meal[]>([]);
+
   useEffect(() => {
     const loadMeals = async () => {
       try {
         const storedMeals = await AsyncStorage.getItem(STORAGE_KEY);
         if (storedMeals !== null) {
-          setMeals(JSON.parse(storedMeals));
+          setMeals(JSON.parse(storedMeals).map((meal: Meal) => ({ ...meal, editing: false }))); 
         }
       } catch (error) {
         console.error('Failed to load meals from storage', error);
       }
     };
-    
     loadMeals();
   }, []);
-  
-  // Save data whenever meals change
+
   useEffect(() => {
     const saveMeals = async () => {
       try {
@@ -54,57 +48,52 @@ export default function ChecklistScreen() {
         console.error('Failed to save meals to storage', error);
       }
     };
-    
     saveMeals();
   }, [meals]);
 
-  const addMeal = async () => {
-    const newMeals = [...meals, { id: Date.now(), name: 'New Meal', checked: false, editing: true, rating: 0 }];
-    setMeals(newMeals);
+  const addMeal = () => {
+    setMeals([...meals, { id: Date.now(), name: 'New Meal', checked: false, editing: true, rating: 5 }]);
   };
 
-  const removeMeal = async (id: number) => {
-    const newMeals = meals.filter(meal => meal.id !== id);
-    setMeals(newMeals);
+  const removeMeal = (id: number) => {
+    setMeals(meals.filter(meal => meal.id !== id));
   };
 
-  const toggleCheck = async (id: number) => {
-    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, checked: !meal.checked } : meal));
-    setMeals(newMeals);
+  const toggleCheck = (id: number) => {
+    setMeals(meals.map(meal => 
+      meal.id === id ? { ...meal, checked: !meal.checked, rating: meal.checked ? 0 : meal.rating } : meal
+    ));
   };
 
-  const updateMealName = async (id: number, newName: string) => {
-    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, name: newName } : meal));
-    setMeals(newMeals);
+  const updateMealName = (id: number, newName: string) => {
+    setMeals(meals.map(meal => (meal.id === id ? { ...meal, name: newName } : meal)));
   };
 
-  const saveEdit = async (id: number) => {
-    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, editing: false } : meal));
-    setMeals(newMeals);
+  const saveEdit = (id: number) => {
+    setMeals(meals.map(meal => (meal.id === id ? { ...meal, editing: false } : meal)));
   };
 
-  const setRating = async (id: number, rating: number) => {
-    const newMeals = meals.map(meal => (meal.id === id ? { ...meal, rating } : meal));
-    setMeals(newMeals);
+  const setRating = (id: number, rating: number) => {
+    setMeals(meals.map(meal => (meal.id === id ? { ...meal, rating } : meal)));
   };
 
-  const handleDragEnd = async ({ data }: { data: Meal[] }) => {
+  const handleDragEnd = ({ data }: { data: Meal[] }) => {
     setMeals(data);
   };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
-        <View style={styles.screenContainer}>
-          <Text style={styles.screenTitle}>Checklist</Text>
+        <Text style={styles.screenTitle}>Meal Checklist</Text>
 
-          <DraggableFlatList
-            data={meals}
-            keyExtractor={(item) => item.id.toString()}
-            onDragEnd={handleDragEnd}
-            contentContainerStyle={styles.flatListContainer}
-            renderItem={({ item, drag }: RenderItemParams<Meal>) => (
-              <View key={item.id} style={styles.mealItem}>
+        <DraggableFlatList
+          data={meals}
+          keyExtractor={(item) => item.id.toString()}
+          onDragEnd={handleDragEnd}
+          contentContainerStyle={styles.listContainer}
+          renderItem={({ item, drag }: RenderItemParams<Meal>) => (
+            <View key={item.id} style={styles.mealCard}>
+              <View style={styles.mealHeader}>
                 {item.editing ? (
                   <TextInput
                     style={styles.input}
@@ -114,104 +103,141 @@ export default function ChecklistScreen() {
                     autoFocus
                   />
                 ) : (
-                  <TouchableOpacity onPress={() => saveEdit(item.id)}>
+                  <TouchableOpacity onPress={() => setMeals(meals.map(meal => 
+                    meal.id === item.id ? { ...meal, editing: true } : meal
+                  ))} style={styles.mealNameContainer}>
                     <Text style={styles.mealName}>{item.name}</Text>
                   </TouchableOpacity>
                 )}
 
-                <TouchableOpacity onPress={() => toggleCheck(item.id)} style={styles.checkbox}>
-                  <Ionicons name={item.checked ? "checkbox" : "square-outline"} size={24} color="#3498db" />
-                </TouchableOpacity>
+                <View style={styles.iconContainer}>
+                  <TouchableOpacity onPress={() => toggleCheck(item.id)}>
+                    <Ionicons name={item.checked ? "checkbox" : "square-outline"} size={28} color="#3498db" />
+                  </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => removeMeal(item.id)}>
-                  <Ionicons name="trash-outline" size={24} color="red" />
-                </TouchableOpacity>
-
-                <View style={styles.ratingContainer}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <TouchableOpacity key={star} onPress={() => setRating(item.id, star)}>
-                      <Ionicons 
-                        name={item.rating >= star ? "star" : "star-outline"} 
-                        size={24} 
-                        color={item.rating >= star ? "#f1c40f" : "#ccc"} 
-                      />
+                  {!item.checked && (
+                    <TouchableOpacity onPress={() => removeMeal(item.id)}>
+                      <Ionicons name="close-circle-outline" size={26} color="red" />
                     </TouchableOpacity>
-                  ))}
+                  )}
+
+                  <TouchableOpacity onLongPress={drag}>
+                    <Ionicons name="reorder-three-outline" size={26} color="#888" />
+                  </TouchableOpacity>
                 </View>
-                
-                <TouchableOpacity onLongPress={drag}>
-                  <Ionicons name="reorder-three-outline" size={24} color="#888" style={{ marginLeft: 10 }} />
-                </TouchableOpacity>
               </View>
-            )}
-          />
-          
-          <TouchableOpacity style={styles.addMealButton} onPress={addMeal}>
-            <Text style={styles.buttonText}>+ Add Meal</Text>
-          </TouchableOpacity>
-        </View>
+
+              {item.checked && (
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.ratingText}>Health: {item.rating}</Text>
+                  <Slider
+                    style={styles.slider}
+                    minimumValue={1}
+                    maximumValue={10}
+                    step={1}
+                    value={item.rating}
+                    onValueChange={(value) => setRating(item.id, value)}
+                    minimumTrackTintColor="#27ae60"
+                    maximumTrackTintColor="#ddd"
+                    thumbTintColor="#27ae60"
+                  />
+                </View>
+              )}
+            </View>
+          )}
+        />
+
+        <TouchableOpacity style={styles.addMealButton} onPress={addMeal}>
+          <Ionicons name="add-circle-outline" size={32} color="white" />
+          <Text style={styles.buttonText}>Add Meal</Text>
+        </TouchableOpacity>
       </SafeAreaView>
-    </GestureHandlerRootView> 
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  screenContainer: { flex: 1, alignItems: 'center', padding: 20 },
-  screenTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  flatListContainer: { paddingBottom: 100 },
+  container: { flex: 1, backgroundColor: '#f8f9fa', padding: 20 },
+  screenTitle: { fontSize: 26, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
+  listContainer: { paddingBottom: 100 },
 
-  input: { 
-    width: 200, 
-    height: 40, 
-    borderWidth: 1, 
-    borderColor: '#ddd', 
-    borderRadius: 8, 
-    paddingHorizontal: 10, 
-    backgroundColor: '#fff' 
+  mealCard: { 
+    backgroundColor: '#fff', 
+    borderRadius: 10, 
+    padding: 12, 
+    marginBottom: 8, 
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
   },
 
-  mealItem: { 
+  mealHeader: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    justifyContent: 'space-between', 
-    width: '100%', 
-    padding: 10, 
+    justifyContent: 'space-between' 
+  },
+
+  input: { 
+    flex: 1, 
+    fontSize: 16, 
     borderBottomWidth: 1, 
     borderColor: '#ddd', 
-    backgroundColor: '#fff' 
+    padding: 4 
+  },
+
+  mealNameContainer: { 
+    flex: 1, 
+    paddingVertical: 6 
   },
 
   mealName: { 
-    fontSize: 16, 
-    flex: 1 
+    fontSize: 18, 
+    fontWeight: 'bold' 
   },
 
-  checkbox: { 
-    padding: 10 
+  iconContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10 
   },
 
   ratingContainer: { 
     flexDirection: 'row', 
-    paddingHorizontal: 10 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingHorizontal: 5
+  },
+
+  ratingText: { 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    color: '#555' 
+  },
+
+  slider: { 
+    width: 140, 
+    height: 30 
   },
 
   buttonText: { 
     color: '#fff', 
     fontSize: 16, 
-    fontWeight: 'bold' 
+    fontWeight: 'bold', 
+    marginLeft: 5 
   },
 
   addMealButton: {
-    marginVertical: 10,
-    backgroundColor: '#27ae60',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignSelf: 'center',
-    width: '80%',
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#27ae60',
+    padding: 12,
+    borderRadius: 50,
+    justifyContent: 'center',
+    width: '90%',
+    alignSelf: 'center',
     position: 'absolute',
-    bottom: 60,
+    bottom: 20,
   }
 });
