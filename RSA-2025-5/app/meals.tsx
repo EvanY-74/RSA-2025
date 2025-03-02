@@ -1,319 +1,341 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import Slider from '@react-native-community/slider'; // Import the Slider component
-import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome for icons
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import Slider from "@react-native-community/slider";
+import Icon from "react-native-vector-icons/Feather";
 
-const App = () => {
-  const [meals, setMeals] = useState([]);
-  const [mealName, setMealName] = useState('');
-  const [mealIngredients, setMealIngredients] = useState('');
-  const [mealRecipe, setMealRecipe] = useState('');
-  const [rating, setRating] = useState(5); // Default rating to 5
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentMealIndex, setCurrentMealIndex] = useState(null);
-  const [viewMeal, setViewMeal] = useState(null); // State to track the meal being viewed
+interface Meal {
+  id: number;
+  name: string;
+  ingredients: string;
+  recipe: string;
+  rating: number;
+}
 
-  const createMeal = () => {
-    // Check if all fields are filled before creating or editing the meal
-    if (!mealName || !mealIngredients || !mealRecipe) {
-      Alert.alert('Error', 'Please fill in all the fields before creating or editing a meal');
-      return;
-    }
+// Preset healthy meals (7-10 health rating)
+const presetMeals: Meal[] = [
+  {
+    id: 1,
+    name: "Grilled Salmon & Quinoa",
+    ingredients: "Salmon, quinoa, spinach, lemon, olive oil",
+    recipe: "Grill salmon, cook quinoa, mix with spinach, squeeze lemon, drizzle olive oil.",
+    rating: 9,
+  },
+  {
+    id: 2,
+    name: "Avocado Toast with Egg",
+    ingredients: "Whole grain bread, avocado, egg, salt, pepper",
+    recipe: "Toast bread, mash avocado, cook egg (fried/boiled), assemble, season to taste.",
+    rating: 8,
+  },
+  {
+    id: 3,
+    name: "Greek Yogurt & Berries",
+    ingredients: "Greek yogurt, blueberries, honey, almonds",
+    recipe: "Mix yogurt with berries, drizzle honey, sprinkle almonds.",
+    rating: 7,
+  },
+  {
+    id: 4,
+    name: "Chicken & Veggie Stir-fry",
+    ingredients: "Chicken breast, broccoli, carrots, bell pepper, soy sauce, garlic",
+    recipe: "Sauté chicken, add veggies, stir in soy sauce and garlic.",
+    rating: 8,
+  },
+  {
+    id: 5,
+    name: "Oatmeal with Banana & Nuts",
+    ingredients: "Oats, banana, walnuts, cinnamon, honey",
+    recipe: "Cook oats, slice banana, add walnuts, sprinkle cinnamon, drizzle honey.",
+    rating: 9,
+  },
+];
 
-    const newMeal = {
-      name: mealName,
-      ingredients: mealIngredients,
-      recipe: mealRecipe,
-      rating,
-    };
+export default function Meals() {
+  const [meals, setMeals] = useState<Meal[]>(presetMeals);
+  const [creatingMeal, setCreatingMeal] = useState(false);
+  const [viewingMeal, setViewingMeal] = useState<Meal | null>(null);
+  const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
+  const [mealName, setMealName] = useState("");
+  const [mealIngredients, setMealIngredients] = useState("");
+  const [mealRecipe, setMealRecipe] = useState("");
+  const [mealRating, setMealRating] = useState(5);
 
-    // If we are editing a meal, replace it with the new meal data
-    if (isEditing && currentMealIndex !== null) {
-      const updatedMeals = [...meals];
-      updatedMeals[currentMealIndex] = newMeal; // Replace the existing meal at the index
-      setMeals(updatedMeals); // Update the meal list with the edited meal
+  const handleSaveMeal = () => {
+    if (!mealName || !mealIngredients || !mealRecipe) return;
+
+    if (editingMeal) {
+      setMeals((prevMeals) =>
+        prevMeals.map((meal) =>
+          meal.id === editingMeal.id
+            ? { ...meal, name: mealName, ingredients: mealIngredients, recipe: mealRecipe, rating: mealRating }
+            : meal
+        )
+      );
+      setEditingMeal(null);
     } else {
-      // Otherwise, just add the new meal to the list
+      const newMeal: Meal = {
+        id: Date.now(),
+        name: mealName,
+        ingredients: mealIngredients,
+        recipe: mealRecipe,
+        rating: mealRating,
+      };
       setMeals([...meals, newMeal]);
     }
 
-    // After saving, reset form and go back to the meal list
     resetForm();
-    setIsEditing(false); // Exit editing mode
-  };
-
-  const deleteMeal = (index) => {
-    Alert.alert('Confirm', 'Are you sure you want to delete this meal?', [
-      {
-        text: 'Cancel',
-      },
-      {
-        text: 'Delete',
-        onPress: () => {
-          const updatedMeals = meals.filter((_, i) => i !== index);
-          setMeals(updatedMeals); // Update the meal list
-          setViewMeal(null); // Clear the view meal state after deletion
-        },
-      },
-    ]);
-  };
-
-  const editMeal = (index) => {
-    const mealToEdit = meals[index];
-    setMealName(mealToEdit.name);
-    setMealIngredients(mealToEdit.ingredients);
-    setMealRecipe(mealToEdit.recipe);
-    setRating(mealToEdit.rating);
-    setIsEditing(true);
-    setCurrentMealIndex(index);
   };
 
   const resetForm = () => {
-    setMealName('');
-    setMealIngredients('');
-    setMealRecipe('');
-    setRating(5); // Reset rating
+    setMealName("");
+    setMealIngredients("");
+    setMealRecipe("");
+    setMealRating(5);
+    setCreatingMeal(false);
+    setViewingMeal(null);
   };
 
-  const viewMealDetails = (index) => {
-    setViewMeal(meals[index]);
-  };
-
-  const backToMealList = () => {
-    setViewMeal(null); // Clear the viewMeal state to go back to the list
+  const handleDeleteMeal = (id: number) => {
+    setMeals(meals.filter((meal) => meal.id !== id));
+    setViewingMeal(null);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Meal Tracker</Text>
+      {creatingMeal ? (
+        <ScrollView style={styles.form}>
+          <Text style={styles.header}>{editingMeal ? "Edit Meal" : "Create New Meal"}</Text>
 
-      {/* Create New Meal Button */}
-      {!isEditing && !viewMeal && (
-        <TouchableOpacity
-          style={styles.createMealButton}
-          onPress={() => {
-            setIsEditing(true);
-            resetForm();
-          }}>
-          <Text style={styles.createMealButtonText}>Create New Meal</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* If editing, show the meal creation screen */}
-      {isEditing && !viewMeal ? (
-        <>
           <TextInput
             style={styles.input}
-            placeholder="Meal Name"
+            placeholder="Enter meal name..."
+            placeholderTextColor="#A9A9A9"
             value={mealName}
             onChangeText={setMealName}
           />
+
           <TextInput
-            style={styles.input}
-            placeholder="Ingredients"
+            style={[styles.input, styles.largeInput]}
+            placeholder="List ingredients (comma-separated)..."
+            placeholderTextColor="#A9A9A9"
             value={mealIngredients}
             onChangeText={setMealIngredients}
+            multiline
           />
+
           <TextInput
-            style={styles.input}
-            placeholder="Recipe"
+            style={[styles.input, styles.largeInput]}
+            placeholder="Describe how to prepare the meal..."
+            placeholderTextColor="#A9A9A9"
             value={mealRecipe}
             onChangeText={setMealRecipe}
+            multiline
           />
-          <Text style={styles.healthinessLabel}>Meal Rating</Text>
+
+          <Text style={styles.label}>Rating: {mealRating}/10</Text>
           <Slider
             style={styles.slider}
             minimumValue={0}
             maximumValue={10}
             step={1}
-            value={rating}
-            onValueChange={setRating}
+            value={mealRating}
+            onValueChange={setMealRating}
+            minimumTrackTintColor="#6BBF59"
+            maximumTrackTintColor="#ccc"
+            thumbTintColor="#6BBF59"
           />
-          <Text style={styles.healthinessValue}>{rating} / 10</Text>
 
-          <TouchableOpacity style={styles.createMealButton} onPress={createMeal}>
-            <Text style={styles.createMealButtonText}>Save Changes</Text>
+          <TouchableOpacity onPress={handleSaveMeal} style={styles.saveButton}>
+            <Text style={styles.buttonText}>Save Meal</Text>
           </TouchableOpacity>
-        </>
-      ) : viewMeal ? (
-        // View Meal Page: Display details of the meal
-        <View style={styles.viewMealContainer}>
-          <Text style={styles.viewMealTitle}>{viewMeal.name}</Text>
-          <Text style={styles.viewMealDetails}>Ingredients: {viewMeal.ingredients}</Text>
-          <Text style={styles.viewMealDetails}>Recipe: {viewMeal.recipe}</Text>
-          <Text style={styles.viewMealDetails}>Rating: {viewMeal.rating} / 10</Text>
 
-          <View style={styles.viewMealButtons}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => {
-                setMealName(viewMeal.name);
-                setMealIngredients(viewMeal.ingredients);
-                setMealRecipe(viewMeal.recipe);
-                setRating(viewMeal.rating);
-                setIsEditing(true);
-                setViewMeal(null); // Exit the view meal screen
-              }}>
-              <Icon name="pencil" size={20} color="#fff" />
+          <TouchableOpacity onPress={resetForm} style={styles.cancelButton}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      ) : viewingMeal ? (
+        <View style={styles.mealView}>
+          <Text style={styles.header}>{viewingMeal.name}</Text>
+          <Text style={styles.mealText}><Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}</Text>
+          <Text style={styles.mealText}><Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}</Text>
+          <Text style={styles.mealText}><Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10</Text>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity onPress={() => { setEditingMeal(viewingMeal); setCreatingMeal(true); }} style={styles.iconButton}>
+              <Icon name="edit" size={20} color="#4A4A4A" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.deleteButton]}
-              onPress={() => deleteMeal(meals.indexOf(viewMeal))}>
-              <Icon name="trash" size={20} color="#fff" />
+            <TouchableOpacity onPress={() => handleDeleteMeal(viewingMeal.id)} style={styles.iconButton}>
+              <Icon name="trash" size={20} color="#E57373" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.backButton]}
-              onPress={backToMealList}>
-              <Icon name="arrow-left" size={20} color="#fff" />
+            <TouchableOpacity onPress={resetForm} style={styles.backButton}>
+              <Icon name="arrow-left" size={24} color="#4A4A4A" />
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        // If not editing, show the meal list
-        <View style={styles.mealsList}>
-          {meals.map((meal, index) => (
-            <View style={styles.mealCard} key={index}>
-              <Text style={styles.mealCardTitle}>{meal.name}</Text>
-              <Text style={styles.mealCardDetails}>Ingredients: {meal.ingredients}</Text>
-              <Text style={styles.mealCardDetails}>Recipe: {meal.recipe}</Text>
-              <Text style={styles.mealCardDetails}>Rating: {meal.rating} / 10</Text>
-
-              <View style={styles.viewButtonContainer}>
-                <TouchableOpacity
-                  style={styles.viewButton}
-                  onPress={() => viewMealDetails(index)}>
-                  <Text style={styles.viewButtonText}>View Meal</Text>
+        <>
+          <FlatList
+            data={meals}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                <Text style={styles.mealName}>{item.name}</Text>
+                <Text style={styles.mealText}>Rating: {item.rating}/10</Text>
+                <TouchableOpacity onPress={() => setViewingMeal(item)} style={styles.viewButton}>
+                  <Text style={styles.buttonText}>View Meal</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          ))}
-        </View>
+            )}
+          />
+
+          {/* Floating Add Button */}
+          <TouchableOpacity style={styles.fabButton} onPress={() => setCreatingMeal(true)}>
+            <Icon name="plus" size={28} color="white" />
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
-};
-
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F8F8F8",
     padding: 16,
-    backgroundColor: '#fff',
   },
   header: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  createMealButton: {
-    backgroundColor: '#4CAF50', // Green color
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  createMealButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+    color: "#333",
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: "#FFF",
+    padding: 12,
     borderRadius: 8,
-    padding: 10,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    fontSize: 16,
     marginBottom: 12,
-    fontSize: 16,
   },
-  healthinessLabel: {
+  largeInput: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  label: {
     fontSize: 16,
-    marginBottom: 8,
-    fontWeight: 'bold',
+    fontWeight: "bold",
+    marginBottom: 4,
+    color: "#555",
   },
   slider: {
-    width: '100%',
-    height: 40,
-    marginBottom: 12,
+    width: "100%",
+    marginBottom: 16,
   },
-  healthinessValue: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  mealCard: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  mealCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  mealCardDetails: {
-    fontSize: 16,
-    marginBottom: 6,
-  },
-  viewButtonContainer: {
-    marginTop: 10,
-  },
-  viewButton: {
-    backgroundColor: '#007BFF',
-    padding: 10,
+  saveButton: {
+    backgroundColor: "#6BBF59",
+    padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  viewButtonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  viewMealContainer: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  viewMealTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  viewMealDetails: {
-    fontSize: 16,
+    alignItems: "center",
     marginBottom: 10,
   },
-  viewMealButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  cancelButton: {
+    backgroundColor: "#AAA",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    fontSize: 16,
+    color: "#FFF",
+    fontWeight: "bold",
+  },
+  card: {
+    backgroundColor: "#FFF",
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mealName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  mealText: {
+    fontSize: 14,
+    color: "#555",
+  },
+  bold: {
+    fontWeight: "bold",
+  },
+  viewButton: {
+    marginTop: 8,
+    backgroundColor: "#4A90E2",
+    padding: 8,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  fabButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#6BBF59",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  mealView: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
     marginTop: 20,
   },
-  actionButton: {
-    backgroundColor: '#4CAF50',
+  iconButton: {
     padding: 10,
+    backgroundColor: "#DDD",
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  deleteButton: {
-    backgroundColor: '#FF0000',
   },
   backButton: {
-    backgroundColor: '#FFA500', // Orange color for back button
+    padding: 10,
+    backgroundColor: "#CCC",
+    borderRadius: 8,
   },
-  mealsList: {
-    marginTop: 20,
+  form: {
+    padding: 16,
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
-
-export default App;
