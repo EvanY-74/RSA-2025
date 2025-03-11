@@ -22,6 +22,7 @@ type Meal = {
 };
 
 const STORAGE_KEY = 'meals_data';
+const LOG_STORAGE_KEY = 'log_data';
 
 export default function ChecklistScreen() {
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -44,12 +45,30 @@ export default function ChecklistScreen() {
     const saveMeals = async () => {
       try {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
+        updateLog();  // Ensures log updates when meals change
       } catch (error) {
         console.error('Failed to save meals to storage', error);
       }
     };
     saveMeals();
   }, [meals]);
+
+  const updateLog = async () => {
+    try {
+      const checkedMeals = meals
+        .filter(meal => meal.checked)
+        .map(meal => ({
+          id: meal.id,
+          name: meal.name,
+          rating: meal.rating,
+          timeChecked: new Date().toLocaleTimeString(),
+        }));
+  
+      await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(checkedMeals));
+    } catch (error) {
+      console.error('Failed to update log storage', error);
+    }
+  };
 
   const addMeal = () => {
     setMeals([...meals, { id: Date.now(), name: 'New Meal', checked: false, editing: true, rating: 5 }]);
