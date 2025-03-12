@@ -21,26 +21,12 @@ import { useEffect } from "react";
     recipe: string;
     rating: number;
   };
-
+  const CHECKLIST_STORAGE_KEY = 'checklist_items';
   const presetMeals: Meal[] = [
     { id: 1, name: "Grilled Salmon & Quinoa", ingredients: "Salmon, quinoa, spinach, lemon", recipe: "Grill salmon, cook quinoa, mix with spinach, drizzle lemon.", rating: 9 },
     { id: 2, name: "Avocado Toast with Egg", ingredients: "Whole grain bread, avocado, egg", recipe: "Toast bread, mash avocado, cook egg, assemble, season.", rating: 8 },
   ];
 
-  useEffect(() => {
-    const loadChecklistItems = async () => {
-      try {
-        const storedItems = await AsyncStorage.getItem("checklistItems");
-        if (storedItems) {
-          setChecklistItems(JSON.parse(storedItems));
-        }
-      } catch (error) {
-        console.error("Error loading checklist items:", error);
-      }
-    };
-
-    loadChecklistItems();
-  }, []);
 
   export default function Meals() {
     const [meals, setMeals] = useState<Meal[]>(presetMeals);
@@ -52,6 +38,29 @@ import { useEffect } from "react";
     const [mealRecipe, setMealRecipe] = useState("");
     const [mealRating, setMealRating] = useState(5);
     const [selectedChecklistItem, setSelectedChecklistItem] = useState("");
+    const [checklistItems, setChecklistItems] = useState<string[]>([]);
+    useEffect(() => {
+      const loadChecklistItems = async () => {
+        try {
+          const storedChecklist = await AsyncStorage.getItem("checklist_items");
+          if (storedChecklist) {
+            setChecklistItems(JSON.parse(storedChecklist));
+          }
+        } catch (error) {
+          console.error("Error loading checklist items:", error);
+        }
+      };
+    
+      loadChecklistItems();
+    }, []);
+
+    const saveChecklistItems = async (items: string[]) => {
+      try {
+        await AsyncStorage.setItem("checklist_items", JSON.stringify(items));
+      } catch (error) {
+        console.error("Error saving checklist items:", error);
+      }
+    };
 
     const handleSaveMeal = () => {
       if (!mealName || !mealIngredients || !mealRecipe) return;
@@ -171,15 +180,16 @@ import { useEffect } from "react";
 
             {/* Checklist Dropdown and Log Button */}
             <Picker
-    selectedValue={selectedChecklistItem}
-    onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
-    style={styles.picker}
-  >
-    <Picker.Item label="Select checklist item..." value="" />
-    {checklistItems.map((item, index) => (
-      <Picker.Item key={index} label={item} value={item} />
-    ))}
-  </Picker>
+  selectedValue={selectedChecklistItem}
+  onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
+  style={[styles.picker, { color: "black" }]} // Change color here
+  dropdownIconColor="black" // Changes the dropdown arrow color
+>
+  <Picker.Item label="Select checklist item..." value="" color="gray" />
+  {checklistItems.map((item, index) => (
+    <Picker.Item key={index} label={String(item)} value={String(item)} color="black" />
+  ))}
+</Picker>
 
             <TouchableOpacity onPress={handleLogMeal} style={styles.logButton}>
               <Text style={styles.buttonText}>Log Meal</Text>
