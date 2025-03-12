@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import Icon from "react-native-vector-icons/Feather";
+import { Picker } from "@react-native-picker/picker";
 
 interface Meal {
   id: number;
@@ -35,27 +36,6 @@ const presetMeals: Meal[] = [
     recipe: "Toast bread, mash avocado, cook egg (fried/boiled), assemble, season to taste.",
     rating: 8,
   },
-  {
-    id: 3,
-    name: "Greek Yogurt & Berries",
-    ingredients: "Greek yogurt, blueberries, honey, almonds",
-    recipe: "Mix yogurt with berries, drizzle honey, sprinkle almonds.",
-    rating: 7,
-  },
-  {
-    id: 4,
-    name: "Chicken & Veggie Stir-fry",
-    ingredients: "Chicken breast, broccoli, carrots, bell pepper, soy sauce, garlic",
-    recipe: "Sauté chicken, add veggies, stir in soy sauce and garlic.",
-    rating: 8,
-  },
-  {
-    id: 5,
-    name: "Oatmeal with Banana & Nuts",
-    ingredients: "Oats, banana, walnuts, cinnamon, honey",
-    recipe: "Cook oats, slice banana, add walnuts, sprinkle cinnamon, drizzle honey.",
-    rating: 9,
-  },
 ];
 
 export default function Meals() {
@@ -67,6 +47,7 @@ export default function Meals() {
   const [mealIngredients, setMealIngredients] = useState("");
   const [mealRecipe, setMealRecipe] = useState("");
   const [mealRating, setMealRating] = useState(5);
+  const [selectedItem, setSelectedItem] = useState<string>("");
 
   const handleSaveMeal = () => {
     if (!mealName || !mealIngredients || !mealRecipe) return;
@@ -163,23 +144,58 @@ export default function Meals() {
         </ScrollView>
       ) : viewingMeal ? (
         <View style={styles.mealView}>
-          <Text style={styles.header}>{viewingMeal.name}</Text>
-          <Text style={styles.mealText}><Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}</Text>
-          <Text style={styles.mealText}><Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}</Text>
-          <Text style={styles.mealText}><Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10</Text>
+  <Text style={styles.header}>{viewingMeal.name}</Text>
+  <Text style={styles.mealText}>
+    <Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}
+  </Text>
+  <Text style={styles.mealText}>
+    <Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}
+  </Text>
+  <Text style={styles.mealText}>
+    <Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10
+  </Text>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity onPress={() => { setEditingMeal(viewingMeal); setCreatingMeal(true); }} style={styles.iconButton}>
-              <Icon name="edit" size={20} color="#4A4A4A" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteMeal(viewingMeal.id)} style={styles.iconButton}>
-              <Icon name="trash" size={20} color="#E57373" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={resetForm} style={styles.backButton}>
-              <Icon name="arrow-left" size={24} color="#4A4A4A" />
-            </TouchableOpacity>
-          </View>
-        </View>
+  {/* Old Buttons: Edit, Delete, Back */}
+  <View style={styles.buttonRow}>
+    <TouchableOpacity 
+      onPress={() => { setEditingMeal(viewingMeal); setCreatingMeal(true); }} 
+      style={styles.iconButton}
+    >
+      <Icon name="edit" size={20} color="#4A4A4A" />
+    </TouchableOpacity>
+    <TouchableOpacity 
+      onPress={() => handleDeleteMeal(viewingMeal.id)} 
+      style={styles.iconButton}
+    >
+      <Icon name="trash" size={20} color="#E57373" />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={resetForm} style={styles.backButton}>
+      <Icon name="arrow-left" size={24} color="#4A4A4A" />
+    </TouchableOpacity>
+  </View>
+
+  {/* New Dropdown & Log Button Section */}
+  <View style={styles.dropdownContainer}>
+  <Picker
+  selectedValue={selectedItem} // This will now correctly be a string
+  style={styles.picker}
+  onValueChange={(itemValue) => setSelectedItem(itemValue)}
+>
+  <Picker.Item label="Select an option..." value="" />
+  <Picker.Item label="Breakfast" value="breakfast" />
+  <Picker.Item label="Lunch" value="lunch" />
+  <Picker.Item label="Dinner" value="dinner" />
+  <Picker.Item label="Snack" value="snack" />
+</Picker>
+
+    <TouchableOpacity 
+      onPress={() => console.log(`Logged: ${viewingMeal.name}`)} 
+      style={styles.logButton}
+    >
+      <Text style={styles.buttonText}>Log</Text>
+    </TouchableOpacity>
+  </View>
+</View>
       ) : (
         <>
           <FlatList
@@ -195,27 +211,22 @@ export default function Meals() {
               </View>
             )}
           />
-
-          {/* Floating Add Button */}
-          <TouchableOpacity style={styles.fabButton} onPress={() => setCreatingMeal(true)}>
-            <Icon name="plus" size={28} color="white" />
-          </TouchableOpacity>
         </>
       )}
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
-    padding: 16,
+    backgroundColor: "#F5F5F5",
+    padding: 20,
   },
   header: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
+    marginBottom: 10,
     color: "#333",
   },
   input: {
@@ -224,46 +235,45 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#DDD",
-    fontSize: 16,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   largeInput: {
-    height: 100,
+    height: 80,
     textAlignVertical: "top",
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 4,
-    color: "#555",
+    marginVertical: 5,
   },
   slider: {
     width: "100%",
-    marginBottom: 16,
+    height: 40,
   },
   saveButton: {
-    backgroundColor: "#6BBF59",
+    backgroundColor: "#4CAF50",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginBottom: 10,
+    marginTop: 10,
   },
   cancelButton: {
-    backgroundColor: "#AAA",
+    backgroundColor: "#E57373",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
+    marginTop: 10,
   },
   buttonText: {
-    fontSize: 16,
     color: "#FFF",
     fontWeight: "bold",
+    fontSize: 16,
   },
   card: {
     backgroundColor: "#FFF",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
@@ -274,68 +284,86 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 4,
   },
   mealText: {
     fontSize: 14,
     color: "#555",
+    marginTop: 5,
   },
   bold: {
     fontWeight: "bold",
   },
   viewButton: {
-    marginTop: 8,
     backgroundColor: "#4A90E2",
-    padding: 8,
+    padding: 10,
     borderRadius: 6,
     alignItems: "center",
-  },
-  fabButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#6BBF59",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 4,
+    marginTop: 10,
   },
   mealView: {
-    flex: 1,
-    padding: 16,
     backgroundColor: "#FFF",
-    borderRadius: 10,
-    marginVertical: 10,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginTop: 20,
-  },
-  iconButton: {
-    padding: 10,
-    backgroundColor: "#DDD",
+    padding: 20,
     borderRadius: 8,
-  },
-  backButton: {
-    padding: 10,
-    backgroundColor: "#CCC",
-    borderRadius: 8,
-  },
-  form: {
-    padding: 16,
-    backgroundColor: "#FFF",
-    borderRadius: 10,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  iconButton: {
+    padding: 10,
+    borderRadius: 6,
+    backgroundColor: "#EEE",
+    alignItems: "center",
+  },
+  backButton: {
+    padding: 10,
+    borderRadius: 6,
+    backgroundColor: "#DDD",
+    alignItems: "center",
+  },
+  dropdownContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  picker: {
+    flex: 1,
+    height: 40,
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+  },
+  logButton: {
+    backgroundColor: "#4A90E2",
+    padding: 10,
+    borderRadius: 6,
+    marginLeft: 10,
+    alignItems: "center",
+  },
+  dropdownContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+    justifyContent: "space-between",
+  },
+  picker: {
+    flex: 1,
+    height: 40,
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#DDD",
+  },
+  logButton: {
+    backgroundColor: "#4A90E2",
+    padding: 10,
+    borderRadius: 6,
+    marginLeft: 10,
+    alignItems: "center",
   },
 });
