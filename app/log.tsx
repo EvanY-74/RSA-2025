@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 const LOG_STORAGE_KEY = 'log_data';
 
 export default function LogScreen() {
-  const [logMeals, setLogMeals] = useState<{ id: number; name: string; rating: number; timeChecked: string }[]>([]);
+  const [logMeals, setLogMeals] = useState<{ id: number; name: string; rating: number; timeChecked: string; checklistItem?: string }[]>([]);
 
   const loadLog = async () => {
     try {
@@ -19,7 +19,6 @@ export default function LogScreen() {
     }
   };
 
-  // Ensure data updates when navigating back to the log page
   useFocusEffect(
     useCallback(() => {
       loadLog();
@@ -29,17 +28,24 @@ export default function LogScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Today's Log</Text>
-      <FlatList
-        data={logMeals}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.mealCard}>
-            <Text style={styles.mealName}>{item.name}</Text>
-            <Text style={styles.mealDetails}>Health: {item.rating}</Text>
-            <Text style={styles.mealDetails}>Checked at: {item.timeChecked}</Text>
-          </View>
-        )}
-      />
+      {logMeals.length === 0 ? (
+        <Text style={styles.noMealsText}>No meals logged yet.</Text>
+      ) : (
+        <FlatList
+          data={logMeals}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.mealCard}>
+              <Text style={styles.mealName}>{item.name}</Text>
+              <Text style={styles.mealDetails}>Health: {item.rating}</Text>
+              <Text style={styles.mealDetails}>Checked at: {item.timeChecked}</Text>
+              {item.checklistItem && (
+                <Text style={styles.mealDetails}>✔ Linked to: {item.checklistItem}</Text>
+              )}
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 }
@@ -47,6 +53,7 @@ export default function LogScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f8f9fa' },
   title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 15 },
+  noMealsText: { fontSize: 16, textAlign: 'center', color: '#888', marginTop: 20 },
   mealCard: {
     backgroundColor: '#fff',
     padding: 12,
