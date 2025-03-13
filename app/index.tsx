@@ -19,6 +19,7 @@ type Meal = {
   checked: boolean;
   editing: boolean;
   rating: number;
+  assignedChecklistItem?: string;
 };
 
 const STORAGE_KEY = 'meals_data';
@@ -27,33 +28,60 @@ const CHECKLIST_STORAGE_KEY = 'checklist_items';
 
 export default function ChecklistScreen() {
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [checklistItems, setChecklistItems] = useState<string[]>([]);
+  const [checklistData, setChecklistData] = useState<{ [key: string]: { meals: Meal[]; highestRating: number } }>({});
 
   useEffect(() => {
-    const loadMeals = async () => {
+    const loadData = async () => {
       try {
         const storedMeals = await AsyncStorage.getItem(STORAGE_KEY);
-        if (storedMeals !== null) {
-          setMeals(JSON.parse(storedMeals).map((meal: Meal) => ({ ...meal, editing: false }))); 
-        }
+        if (storedMeals) setMeals(JSON.parse(storedMeals));
+
+        const storedChecklist = await AsyncStorage.getItem(CHECKLIST_STORAGE_KEY);
+        if (storedChecklist) setChecklistItems(JSON.parse(storedChecklist));
       } catch (error) {
-        console.error('Failed to load meals from storage', error);
+        console.error("Error loading data:", error);
       }
     };
-    loadMeals();
+    loadData();
   }, []);
 
   useEffect(() => {
     const saveMeals = async () => {
       try {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
-        await AsyncStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(meals)); // Save checklist items separately
-        updateLog();  // Ensures log updates when meals change
+        updateChecklistData();
+        updateLog();
       } catch (error) {
         console.error('Failed to save meals to storage', error);
       }
     };
     saveMeals();
   }, [meals]);
+
+  useEffect(() => {
+    const saveChecklistItems = async () => {
+      try {
+        await AsyncStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(checklistItems));
+      } catch (error) {
+        console.error('Failed to save checklist items', error);
+      }
+    };
+    saveChecklistItems();
+  }, [checklistItems]);
+
+  const updateChecklistData = () => {
+    const updatedChecklistData: { [key: string]: { meals: Meal[]; highestRating: number } } = {};
+
+    checklistItems.forEach(item => {
+      const assignedMeals = meals.filter(meal => meal.assignedChecklistItem === item);
+      const highestRating = assignedMeals.length > 0 ? Math.max(...assignedMeals.map(meal => meal.rating)) : 0;
+
+      updatedChecklistData[item] = { meals: assignedMeals, highestRating };
+    });
+
+    setChecklistData(updatedChecklistData);
+  };
 
   const updateLog = async () => {
     try {
@@ -74,6 +102,11 @@ export default function ChecklistScreen() {
 
   const addMeal = () => {
     setMeals([...meals, { id: Date.now(), name: 'New Meal', checked: false, editing: true, rating: 5 }]);
+  };
+
+  const addChecklistItem = () => {
+    const newItem = `Checklist Item ${checklistItems.length + 1}`;
+    setChecklistItems([...checklistItems, newItem]);
   };
 
   const removeMeal = (id: number) => {
@@ -172,6 +205,7 @@ export default function ChecklistScreen() {
           <Ionicons name="add-circle-outline" size={32} color="white" />
           <Text style={styles.buttonText}>Add Meal</Text>
         </TouchableOpacity>
+
       </SafeAreaView>
     </GestureHandlerRootView>
   );

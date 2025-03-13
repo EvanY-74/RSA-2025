@@ -38,21 +38,22 @@ import { useEffect } from "react";
     const [mealRecipe, setMealRecipe] = useState("");
     const [mealRating, setMealRating] = useState(5);
     const [selectedChecklistItem, setSelectedChecklistItem] = useState("");
-    const [checklistItems, setChecklistItems] = useState<string[]>([]);
-    useEffect(() => {
-      const loadChecklistItems = async () => {
-        try {
-          const storedChecklist = await AsyncStorage.getItem("checklist_items");
-          if (storedChecklist) {
-            setChecklistItems(JSON.parse(storedChecklist));
-          }
-        } catch (error) {
-          console.error("Error loading checklist items:", error);
-        }
-      };
-    
-      loadChecklistItems();
-    }, []);
+    const [checklistItems, setChecklistItems] = useState<{ id: number, name: string }[]>([]);
+
+useEffect(() => {
+  const loadChecklistItems = async () => {
+    try {
+      const storedChecklist = await AsyncStorage.getItem(CHECKLIST_STORAGE_KEY);
+      if (storedChecklist) {
+        setChecklistItems(JSON.parse(storedChecklist));
+      }
+    } catch (error) {
+      console.error("Error loading checklist items:", error);
+    }
+  };
+
+  loadChecklistItems();
+}, []);
 
     const saveChecklistItems = async (items: string[]) => {
       try {
@@ -113,13 +114,42 @@ import { useEffect } from "react";
       }
     };
 
-    const handleLogMeal = () => {
+    const handleLogMeal = async () => {
       if (!selectedChecklistItem || !viewingMeal) return;
     
-      console.log(`Logged ${viewingMeal.name} under ${selectedChecklistItem}`);
+      try {
+        const storedChecklist = await AsyncStorage.getItem(CHECKLIST_STORAGE_KEY);
+        let checklist = storedChecklist ? JSON.parse(storedChecklist) : {};
     
-      setSelectedChecklistItem(""); // Reset dropdown selection after logging
-      setViewingMeal(null);
+        // Ensure the checklist item exists and has the right structure
+        if (!checklist[selectedChecklistItem]) {
+          checklist[selectedChecklistItem] = { meals: [], highestRating: 0 };
+        }
+    
+        // Add the selected meal if it's not already logged
+        const isMealLogged = checklist[selectedChecklistItem].meals.some(
+          (meal: Meal) => meal.id === viewingMeal.id
+        );
+    
+        if (!isMealLogged) {
+          checklist[selectedChecklistItem].meals.push(viewingMeal);
+        }
+    
+        // Update the highest rating
+        checklist[selectedChecklistItem].highestRating = Math.max(
+          ...checklist[selectedChecklistItem].meals.map((meal: Meal) => meal.rating)
+        );
+    
+        // Save back to AsyncStorage
+        await AsyncStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(checklist));
+    
+        console.log(`Logged ${viewingMeal.name} under ${selectedChecklistItem}`);
+      } catch (error) {
+        console.error("Error logging meal:", error);
+      }
+    
+      setSelectedChecklistItem(""); // Reset dropdown selection
+      setViewingMeal(null); // Exit viewing mode
     };
 
     return (
@@ -182,12 +212,12 @@ import { useEffect } from "react";
             <Picker
   selectedValue={selectedChecklistItem}
   onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
-  style={[styles.picker, { color: "black" }]} // Change color here
-  dropdownIconColor="black" // Changes the dropdown arrow color
+  style={[styles.picker, { color: "black" }]}
+  dropdownIconColor="black"
 >
   <Picker.Item label="Select checklist item..." value="" color="gray" />
-  {checklistItems.map((item, index) => (
-    <Picker.Item key={index} label={String(item)} value={String(item)} color="black" />
+  {checklistItems.map((item) => (
+    <Picker.Item key={item.id} label={item.name} value={item.name} color="black" />
   ))}
 </Picker>
 
