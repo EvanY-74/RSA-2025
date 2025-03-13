@@ -40,20 +40,21 @@ import { useEffect } from "react";
     const [selectedChecklistItem, setSelectedChecklistItem] = useState("");
     const [checklistItems, setChecklistItems] = useState<{ id: number, name: string }[]>([]);
 
-useEffect(() => {
-  const loadChecklistItems = async () => {
-    try {
-      const storedChecklist = await AsyncStorage.getItem(CHECKLIST_STORAGE_KEY);
-      if (storedChecklist) {
-        setChecklistItems(JSON.parse(storedChecklist));
-      }
-    } catch (error) {
-      console.error("Error loading checklist items:", error);
-    }
-  };
-
-  loadChecklistItems();
-}, []);
+    useEffect(() => {
+      const loadChecklistItems = async () => {
+        try {
+          const storedChecklist = await AsyncStorage.getItem(CHECKLIST_STORAGE_KEY);
+          console.log("Loaded Checklist Items:", storedChecklist); // Debugging line
+          if (storedChecklist) {
+            setChecklistItems(JSON.parse(storedChecklist));
+          }
+        } catch (error) {
+          console.error("Error loading checklist items:", error);
+        }
+      };
+    
+      loadChecklistItems();
+    }, []);
 
     const saveChecklistItems = async (items: string[]) => {
       try {
