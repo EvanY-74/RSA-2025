@@ -23,6 +23,7 @@ type Meal = {
 
 const STORAGE_KEY = 'meals_data';
 const LOG_STORAGE_KEY = 'log_data';
+const CHECKLIST_STORAGE_KEY = 'checklist_items';
 
 export default function ChecklistScreen() {
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -45,6 +46,7 @@ export default function ChecklistScreen() {
     const saveMeals = async () => {
       try {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
+        await AsyncStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(meals)); // Save checklist items separately
         updateLog();  // Ensures log updates when meals change
       } catch (error) {
         console.error('Failed to save meals to storage', error);
@@ -174,12 +176,10 @@ export default function ChecklistScreen() {
     </GestureHandlerRootView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa', padding: 20 },
   screenTitle: { fontSize: 26, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
   listContainer: { paddingBottom: 100 },
-
   mealCard: { 
     backgroundColor: '#fff', 
     borderRadius: 10, 
@@ -190,73 +190,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2
   },
-
   mealHeader: { 
     flexDirection: 'row', 
     alignItems: 'center', 
     justifyContent: 'space-between' 
   },
-
-  input: { 
-    flex: 1, 
-    fontSize: 16, 
-    borderBottomWidth: 1, 
-    borderColor: '#ddd', 
-    padding: 4 
-  },
-
-  mealNameContainer: { 
-    flex: 1, 
-    paddingVertical: 6 
-  },
-
-  mealName: { 
-    fontSize: 18, 
-    fontWeight: 'bold' 
-  },
-
-  iconContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 10 
-  },
-
-  ratingContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between',
-    marginTop: 8,
-    paddingHorizontal: 5
-  },
-
-  ratingText: { 
-    fontSize: 14, 
-    fontWeight: 'bold', 
-    color: '#555' 
-  },
-
-  slider: { 
-    width: 140, 
-    height: 30 
-  },
-
-  buttonText: { 
-    color: '#fff', 
-    fontSize: 16, 
-    fontWeight: 'bold', 
-    marginLeft: 5 
-  },
-
-  addMealButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#27ae60',
-    padding: 12,
-    borderRadius: 50,
-    justifyContent: 'center',
-    width: '90%',
-    alignSelf: 'center',
-    position: 'absolute',
-    bottom: 20,
-  }
+  mealName: { fontSize: 18, fontWeight: 'bold' },
+  dropdownContainer: { marginTop: 10 },
+  dropdownLabel: { fontSize: 14, fontWeight: 'bold' },
+  picker: { height: 50, width: '100%' },
 });
