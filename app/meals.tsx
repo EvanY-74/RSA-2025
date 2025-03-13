@@ -83,36 +83,38 @@ export default function Meals() {
     }
   };
 
-  const handleSaveMeal = () => {
-    if (!mealName || !mealIngredients || !mealRecipe) return;
-    if (editingMeal) {
-      setMeals((prevMeals) =>
-        prevMeals.map((meal) =>
-          meal.id === editingMeal.id
-            ? {
-                ...meal,
-                name: mealName,
-                ingredients: mealIngredients,
-                recipe: mealRecipe,
-                rating: mealRating,
-              }
-            : meal
-        )
-      );
-      setEditingMeal(null);
-    } else {
-      const newMeal: Meal = {
-        id: Date.now(),
-        name: mealName,
-        ingredients: mealIngredients,
-        recipe: mealRecipe,
-        rating: mealRating,
-      };
-      setMeals([...meals, newMeal]);
-    }
-    resetForm();
-  };
+  
+const handleSaveMeal = () => {
+  if (!mealName || !mealIngredients || !mealRecipe) return;
 
+  if (editingMeal) {
+    setMeals((prevMeals) =>
+      prevMeals.map((meal) =>
+        meal.id === editingMeal.id
+          ? {
+              ...meal,
+              name: mealName,
+              ingredients: mealIngredients,
+              recipe: mealRecipe,
+              rating: mealRating,
+            }
+          : meal
+      )
+    );
+    setEditingMeal(null);
+  } else {
+    const newMeal: Meal = {
+      id: Date.now(),
+      name: mealName,
+      ingredients: mealIngredients,
+      recipe: mealRecipe,
+      rating: mealRating,
+    };
+    setMeals([...meals, newMeal]);
+  }
+
+  resetForm();
+};
   const resetForm = () => {
     setMealName("");
     setMealIngredients("");
@@ -160,62 +162,112 @@ export default function Meals() {
     setViewingMeal(null);
   };
 
-  return (
-    <View style={styles.container}>
-      {!creatingMeal && !viewingMeal && (
-        <>
-          <FlatList
-            data={meals}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.card}>
-                <Text style={styles.mealName}>{item.name}</Text>
-                <TouchableOpacity onPress={() => setViewingMeal(item)} style={styles.viewButton}>
-                  <Text style={styles.buttonText}>View Meal</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          />
-          <TouchableOpacity style={styles.addMealButton} onPress={() => setCreatingMeal(true)}>
-            <Icon name="plus" size={24} color="white" />
-          </TouchableOpacity>
-        </>
-      )}
+return (
+  <View style={styles.container}>
+    {!creatingMeal && !viewingMeal && (
+      <>
+        <FlatList
+          data={meals}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Text style={styles.mealName}>{item.name}</Text>
+              <TouchableOpacity onPress={() => setViewingMeal(item)} style={styles.viewButton}>
+                <Text style={styles.buttonText}>View Meal</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+        <TouchableOpacity style={styles.addMealButton} onPress={() => setCreatingMeal(true)}>
+          <Icon name="plus" size={24} color="white" />
+        </TouchableOpacity>
+      </>
+    )}
 
-      {viewingMeal && (
-        <View style={styles.mealView}>
-          <Text style={styles.header}>{viewingMeal.name}</Text>
-          <Text style={styles.mealText}><Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}</Text>
-          <Text style={styles.mealText}><Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}</Text>
-          <Text style={styles.mealText}><Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10</Text>
+    {creatingMeal && (
+      <ScrollView style={styles.mealView}>
+        <Text style={styles.header}>{editingMeal ? "Edit Meal" : "Add a New Meal"}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Meal Name"
+          value={mealName}
+          onChangeText={setMealName}
+        />
+        <TextInput
+          style={[styles.input, styles.largeInput]}
+          placeholder="Ingredients"
+          value={mealIngredients}
+          onChangeText={setMealIngredients}
+          multiline
+        />
+        <TextInput
+          style={[styles.input, styles.largeInput]}
+          placeholder="Recipe"
+          value={mealRecipe}
+          onChangeText={setMealRecipe}
+          multiline
+        />
+        <Text>Health Rating: {mealRating}/10</Text>
+        <Slider
+          style={{ width: "100%", height: 40 }}
+          minimumValue={0}
+          maximumValue={10}
+          step={1}
+          value={mealRating}
+          onValueChange={setMealRating}
+        />
+        <TouchableOpacity onPress={handleSaveMeal} style={styles.saveButton}>
+          <Text style={styles.buttonText}>Save</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={resetForm} style={styles.cancelButton}>
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    )}
 
-          <Picker selectedValue={selectedChecklistItem} onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)} style={styles.picker}>
-            <Picker.Item label="Select checklist item..." value="" />
-            {checklistItems.map((item) => (
-              <Picker.Item key={item.id} label={item.name} value={item.name} />
-            ))}
-          </Picker>
+    {viewingMeal && (
+      <View style={styles.mealView}>
+        <Text style={styles.header}>{viewingMeal.name}</Text>
+        <Text style={styles.mealText}>
+          <Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}
+        </Text>
+        <Text style={styles.mealText}>
+          <Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}
+        </Text>
+        <Text style={styles.mealText}>
+          <Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10
+        </Text>
 
-          <TouchableOpacity onPress={handleLogMeal} style={styles.logButton}>
-            <Text style={styles.buttonText}>Log Meal</Text>
-          </TouchableOpacity>
+        <Picker
+          selectedValue={selectedChecklistItem}
+          onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select checklist item..." value="" />
+          {checklistItems.map((item) => (
+            <Picker.Item key={item.id} label={item.name} value={item.name} />
+          ))}
+        </Picker>
 
-          <View style={styles.buttonRow}>
-            <TouchableOpacity onPress={handleEditMeal} style={styles.editButton}>
-              <Text style={styles.buttonText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteMeal(viewingMeal.id)} style={styles.deleteButton}>
-              <Text style={styles.buttonText}>Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setViewingMeal(null)} style={styles.backButton}>
-              <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-    </View>
-  );
-}
+        <TouchableOpacity onPress={handleLogMeal} style={styles.logButton}>
+          <Text style={styles.buttonText}>Log Meal</Text>
+        </TouchableOpacity>
+
+        <View style={styles.buttonRow}>
+          <TouchableOpacity onPress={handleEditMeal} style={styles.editButton}>
+            <Text style={styles.buttonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDeleteMeal(viewingMeal.id)} style={styles.deleteButton}>
+            <Text style={styles.buttonText}>Delete</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setViewingMeal(null)} style={styles.backButton}>
+            <Text style={styles.buttonText}>Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    )}
+  </View>
+)};
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5", padding: 20 },
   header: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
@@ -236,18 +288,24 @@ const styles = StyleSheet.create({
   },
   bold: { fontWeight: "bold" },
   input: {
-    backgroundColor: "#FFF",
-    padding: 12,
+    width: "100%",
+    padding: 10,
+    borderWidth: 1,  // Increase border width
+    borderColor: "#333",  // Darker border color
     borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: "white",
+    fontSize: 16,
   },
-  largeInput: { height: 80, textAlignVertical: "top" },
-  saveButton: { backgroundColor: "#4CAF50", padding: 12, borderRadius: 6 },
-  cancelButton: {
-    backgroundColor: "#D32F2F",
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 10,
+  largeInput: {
+    width: "100%",
+    padding: 10,
+    borderWidth: 1,  // Same here
+    borderColor: "#333",  // Darker shade
+    borderRadius: 8,
+    backgroundColor: "white",
+    fontSize: 16,
+    minHeight: 80,
+    textAlignVertical: "top",
   },
   deleteButton: {
     backgroundColor: "#FF5252",
@@ -302,5 +360,26 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 8,
     marginTop: 20,
+  },
+  saveButton: {
+    backgroundColor: "#4CAF50", // Green color for saving
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 5,
+  },
+  
+  cancelButton: {
+    backgroundColor: "#D32F2F", // Red color for cancel
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginVertical: 5,
+  },
+  
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
