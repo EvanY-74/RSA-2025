@@ -4,14 +4,42 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
 const LOG_STORAGE_KEY = 'log_data';
+const RECAP_STORAGE_KEY = 'recap_data';
+const LAST_LOG_DATE_KEY = 'last_log_date';
 
 export default function LogScreen() {
-  const [logMeals, setLogMeals] = useState<{ id: number; name: string; rating: number; timeChecked: string; checklistItem?: string }[]>([]);
+  const [logMeals, setLogMeals] = useState([]);
+
+  useEffect(() => {
+    moveLogsToRecap();
+  }, []);
+
+  const moveLogsToRecap = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const lastLogDate = await AsyncStorage.getItem(LAST_LOG_DATE_KEY);
+
+      if (lastLogDate === today) return; // Already processed today
+
+      const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+      if (storedLog) {
+        const pastLogs = JSON.parse(await AsyncStorage.getItem(RECAP_STORAGE_KEY)) || [];
+        pastLogs.push({ date: lastLogDate, logs: JSON.parse(storedLog) });
+
+        await AsyncStorage.setItem(RECAP_STORAGE_KEY, JSON.stringify(pastLogs));
+        await AsyncStorage.removeItem(LOG_STORAGE_KEY);
+      }
+
+      await AsyncStorage.setItem(LAST_LOG_DATE_KEY, today);
+    } catch (error) {
+      console.error('Error moving logs to recap:', error);
+    }
+  };
 
   const loadLog = async () => {
     try {
       const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
-      if (storedLog !== null) {
+      if (storedLog) {
         setLogMeals(JSON.parse(storedLog));
       }
     } catch (error) {
@@ -19,7 +47,6 @@ export default function LogScreen() {
     }
   };
 
-  // Ensure data updates when navigating back to the log page
   useFocusEffect(
     useCallback(() => {
       loadLog();
