@@ -47,6 +47,23 @@ export default function LogScreen() {
     }
   };
 
+  const updateLog = async (mealId: number) => {
+    try {
+      const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+      let updatedLog = storedLog ? JSON.parse(storedLog) : [];
+
+      updatedLog = updatedLog.map((meal: any) =>
+        meal.id === mealId ? { ...meal, timeChecked: new Date().toLocaleTimeString() } : meal
+      );
+
+      await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(updatedLog));
+      setLogMeals(updatedLog);
+    } catch (error) {
+      console.error('Failed to update log data', error);
+    }
+  };
+
+  // Ensure data updates when navigating back to the log page
   useFocusEffect(
     useCallback(() => {
       loadLog();
