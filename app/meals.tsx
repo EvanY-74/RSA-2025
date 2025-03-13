@@ -44,7 +44,8 @@ import { useEffect } from "react";
         try {
           const storedChecklist = await AsyncStorage.getItem("checklist_items");
           if (storedChecklist) {
-            setChecklistItems(JSON.parse(storedChecklist));
+            setChecklistItems(JSON.parse(storedChecklist).filter((item: any) => item.name).map((item: any) => item.name));
+
           }
         } catch (error) {
           console.error("Error loading checklist items:", error);
@@ -184,6 +185,7 @@ import { useEffect } from "react";
   onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
   style={[styles.picker, { color: "black" }]} // Change color here
   dropdownIconColor="black" // Changes the dropdown arrow color
+  mode="dropdown"
 >
   <Picker.Item label="Select checklist item..." value="" color="gray" />
   {checklistItems.map((item, index) => (

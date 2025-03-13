@@ -3,10 +3,18 @@ import { View, Text, FlatList, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
+interface LoggedMeal {
+  id: number;
+  name: string;
+  rating: number;
+  timeChecked: string;
+  checklistItem?: string;
+}
+
 const LOG_STORAGE_KEY = 'log_data';
 
 export default function LogScreen() {
-  const [logMeals, setLogMeals] = useState<{ id: number; name: string; rating: number; timeChecked: string; checklistItem?: string }[]>([]);
+  const [logMeals, setLogMeals] = useState<LoggedMeal[]>([]);
 
   const loadLog = async () => {
     try {
@@ -16,22 +24,6 @@ export default function LogScreen() {
       }
     } catch (error) {
       console.error('Failed to load log data', error);
-    }
-  };
-
-  const updateLog = async (mealId: number) => {
-    try {
-      const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
-      let updatedLog = storedLog ? JSON.parse(storedLog) : [];
-
-      updatedLog = updatedLog.map((meal: any) =>
-        meal.id === mealId ? { ...meal, timeChecked: new Date().toLocaleTimeString() } : meal
-      );
-
-      await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(updatedLog));
-      setLogMeals(updatedLog);
-    } catch (error) {
-      console.error('Failed to update log data', error);
     }
   };
 
@@ -68,9 +60,23 @@ export default function LogScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f8f9fa' },
-  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 15 },
-  noMealsText: { fontSize: 16, textAlign: 'center', color: '#888', marginTop: 20 },
+  container: { 
+    flex: 1, 
+    padding: 20, 
+    backgroundColor: '#f8f9fa' 
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    marginBottom: 15 
+  },
+  noMealsText: { 
+    fontSize: 16, 
+    textAlign: 'center', 
+    color: '#888', 
+    marginTop: 20 
+  },
   mealCard: {
     backgroundColor: '#fff',
     padding: 12,
@@ -81,6 +87,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  mealName: { fontSize: 18, fontWeight: 'bold' },
-  mealDetails: { fontSize: 14, color: '#555' },
+  mealName: { 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  },
+  mealDetails: { 
+    fontSize: 14, 
+    color: '#555' 
+  },
 });

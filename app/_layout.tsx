@@ -7,41 +7,51 @@ import LogScreen from './log';
 import RecapScreen from './recap';
 import SettingsScreen from './settings';
 
-
 const Tab = createBottomTabNavigator();
 
 export default function Layout() {
   return (
-    <View style={{ flex: 1 }}>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ color, size }) => {
-            let iconName: string;
-
-            if (route.name === 'Checklist') {
-              iconName = 'checkbox-outline';
-            } else if (route.name === 'Meals') {
-              iconName = 'fast-food-outline';
-            } else if (route.name === 'Log') {
-              iconName = 'document-text-outline';
-            } else if (route.name === 'Recap') {
-              iconName = 'calendar-outline';
-            } else {
-              iconName = 'settings-outline';
-            }
-
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: '#3498db',
-          tabBarInactiveTintColor: '#000',
-        })}
-      >
-        <Tab.Screen name="Checklist" component={ChecklistScreen} />
-        <Tab.Screen name="Meals" component={MealsScreen} />
-        <Tab.Screen name="Log" component={LogScreen} />
-        <Tab.Screen name="Recap" component={RecapScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
-      </Tab.Navigator>
-    </View>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          const icons: Record<string, string> = {
+            Checklist: 'checkbox-outline',
+            Meals: 'fast-food-outline',
+            Log: 'document-text-outline',
+            Recap: 'calendar-outline',
+            Settings: 'settings-outline',
+          };
+          return <Ionicons name={icons[route.name]} size={size} color={color} style={{ marginBottom: -3 }} />;
+        },
+        tabBarActiveTintColor: '#3498db',
+        tabBarInactiveTintColor: '#95a5a6',
+        tabBarStyle: {
+          backgroundColor: '#ecf0f1',
+          borderTopWidth: 0,
+          paddingBottom: 10,
+          paddingTop: 8,
+          height: 65,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          paddingBottom: 3,
+        },
+        headerStyle: {
+          backgroundColor: '#3498db',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          fontSize: 18,
+        },
+      })}
+    >
+      <Tab.Screen name="Checklist" component={ChecklistScreen} />
+      <Tab.Screen name="Meals" component={MealsScreen} />
+      <Tab.Screen name="Log" component={LogScreen} />
+      <Tab.Screen name="Recap" component={RecapScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
+    </Tab.Navigator>
   );
 }
