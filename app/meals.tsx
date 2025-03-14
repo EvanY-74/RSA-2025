@@ -143,24 +143,38 @@ const handleSaveMeal = () => {
   };
 
   const handleLogMeal = async () => {
-    if (!selectedChecklistItem || !viewingMeal) return;
+  if (!selectedChecklistItem || !viewingMeal) return;
 
-    try {
-      const updatedChecklist = checklistItems.map((item) =>
-        item.name === selectedChecklistItem ? { ...item, checked: true } : item
-      );
+  try {
+    const updatedChecklist = checklistItems.map((item) =>
+      item.name === selectedChecklistItem ? { ...item, checked: true } : item
+    );
 
-      setChecklistItems(updatedChecklist);
-      await saveChecklistItems(updatedChecklist);
+    setChecklistItems([...updatedChecklist]); // Ensure state updates
+    await saveChecklistItems(updatedChecklist);
 
-      console.log(`Logged ${viewingMeal.name} under ${selectedChecklistItem}`);
-    } catch (error) {
-      console.error("Error logging meal:", error);
-    }
+    // Fetch existing log
+    const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+    const logData = storedLog ? JSON.parse(storedLog) : [];
 
-    setSelectedChecklistItem("");
-    setViewingMeal(null);
-  };
+    // Add logged meal
+    const newLog = [...logData, { 
+      name: viewingMeal.name, 
+      rating: viewingMeal.rating, 
+      time: new Date().toLocaleTimeString() 
+    }];
+
+    await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(newLog));
+
+    console.log(`Logged ${viewingMeal.name} under ${selectedChecklistItem}`);
+
+  } catch (error) {
+    console.error("Error logging meal:", error);
+  }
+
+  setSelectedChecklistItem("");
+  setViewingMeal(null);
+};
 
 return (
   <View style={styles.container}>

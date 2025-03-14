@@ -36,7 +36,7 @@ export default function RecapScreen() {
           renderItem={({ item }) => (
             <View style={styles.logCard}>
               <Text style={styles.logDate}>{item.date}</Text>
-              {item.logs.map((meal, index) => (
+              {item.logs.map((meal: { name: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; rating: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; timeChecked: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; checklistItem: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | null | undefined; }, index: React.Key | null | undefined) => (
                 <View key={index} style={styles.mealItem}>
                   <Text style={styles.mealName}>{meal.name}</Text>
                   <Text style={styles.mealDetails}>Health: {meal.rating}</Text>
