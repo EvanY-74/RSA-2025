@@ -24,28 +24,125 @@ export default function CalendarRecapScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   
   // Load all logs (both current and past)
-  const loadAllLogs = useCallback(async () => {
-    try {
-      // Get recap data (past logs)
-      const storedRecap = await AsyncStorage.getItem(RECAP_STORAGE_KEY);
-      const recapData = storedRecap ? JSON.parse(storedRecap) : [];
-      
-      // Get current log data
-      const currentLogData = await AsyncStorage.getItem(LOG_STORAGE_KEY);
-      const currentLogs = currentLogData ? JSON.parse(currentLogData) : [];
-      
-      // Combine all logs
-      const combinedLogs = [...recapData, ...currentLogs];
-      
-      // Sort logs by date (newest first)
-      combinedLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
-      
-      setAllLogs(combinedLogs);
-    } catch (error) {
-      console.error('Failed to load logs data', error);
-      setAllLogs([]);
+// Load all logs (both current and past)
+const loadAllLogs = useCallback(async () => {
+  try {
+    // Get recap data (past logs)
+    const storedRecap = await AsyncStorage.getItem(RECAP_STORAGE_KEY);
+    const recapData = storedRecap ? JSON.parse(storedRecap) : [];
+    
+    // Get current log data
+    const currentLogData = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+    const currentLogs = currentLogData ? JSON.parse(currentLogData) : [];
+    
+    // Add sample March data for testing
+    const sampleMarchData = getSampleMarchData();
+    
+    // Combine all logs
+    const combinedLogs = [...recapData, ...currentLogs, ...sampleMarchData];
+    
+    // Sort logs by date (newest first)
+    combinedLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    setAllLogs(combinedLogs);
+  } catch (error) {
+    console.error('Failed to load logs data', error);
+    setAllLogs([]);
+  }
+}, []);
+
+  // Add this function at the beginning of your component, before useEffect
+const getSampleMarchData = () => {
+  const currentYear = new Date().getFullYear();
+  return [
+    {
+      date: `${currentYear}-02-05`,
+      meals: [
+        {
+          name: "Breakfast",
+          timeChecked: "08:30 AM",
+          rating: 8.5
+        },
+        {
+          name: "Lunch",
+          timeChecked: "12:45 PM",
+          rating: 6.2
+        }
+      ]
+    },
+    {
+      date: `${currentYear}-02-12`,
+      meals: [
+        {
+          name: "Dinner",
+          timeChecked: "7:15 PM",
+          rating: 9.0,
+        }
+      ]
+    },
+    {
+      date: `${currentYear}-02-15`,
+      meals: [
+        {
+          name: "Breakfast",
+          timeChecked: "07:45 AM",
+          rating: 4.2
+        },
+        {
+          name: "Lunch",
+          timeChecked: "1:30 PM",
+          associatedMeal: {
+            name: "Chicken Salad",
+            rating: 7.8
+          }
+        }
+      ]
+    },
+    {
+      date: `${currentYear}-02-21`,
+      meals: [
+        {
+          name: "Brunch",
+          timeChecked: "10:30 AM",
+          rating: 2.5
+        }
+      ]
+    },
+    {
+      date: `${currentYear}-02-25`,
+      meals: [
+        {
+          name: "Breakfast",
+          timeChecked: "08:00 AM",
+          rating: 6.7
+        },
+        {
+          name: "Lunch",
+          timeChecked: "12:15 PM",
+          rating: 5.4
+        },
+        {
+          name: "Dinner",
+          timeChecked: "6:45 PM",
+          rating: 8.9
+        }
+      ]
+    },
+    {
+      date: `${currentYear}-02-28`,
+      meals: [
+        {
+          name: "Dinner",
+          timeChecked: "7:30 PM",
+          associatedMeal: {
+            name: "Salmon with Vegetables",
+            rating: 9.5
+          }
+        }
+      ]
     }
-  }, []);
+  ];
+};
 
   // Load logs when screen is focused
   useFocusEffect(
