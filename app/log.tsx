@@ -3,6 +3,19 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Ionicons';
+
+const COLORS = {
+  primary: '#2E86C1',       // Primary blue
+  secondary: '#27AE60',     // Secondary green
+  background: '#F8F9FA',    // Light background
+  card: '#FFFFFF',          // Card background
+  text: '#333333',          // Primary text
+  lightText: '#777777',     // Secondary text
+  danger: '#E74C3C',        // Red for delete
+  border: '#EEEEEE',        // Light border color
+  checkedBackground: '#F0F9F0', // Light green for checked items
+};
 
 const LOG_STORAGE_KEY = 'log_data';
 const RECAP_STORAGE_KEY = 'recap_data';
@@ -12,10 +25,12 @@ export default function LogScreen() {
   const [logData, setLogData] = useState([]);
   const [todaysMeals, setTodaysMeals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentDay, setCurrentDay] = useState('');
 
   // Run once when component mounts
   useEffect(() => {
     const initializeApp = async () => {
+      updateCurrentDay();
       await moveLogsToRecap();
       await loadLog();
       setIsLoading(false);
@@ -23,6 +38,14 @@ export default function LogScreen() {
     
     initializeApp();
   }, []);
+
+  // Function to update the current day
+  const updateCurrentDay = () => {
+    const today = new Date();
+    const options = { weekday: 'long', month: 'long', day: 'numeric' };
+    const formattedDate = today.toLocaleDateString('en-US', options);
+    setCurrentDay(formattedDate);
+  };
 
   const moveLogsToRecap = async () => {
     try {
@@ -207,6 +230,7 @@ export default function LogScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!isLoading) {
+        updateCurrentDay();
         loadLog();
       }
     }, [isLoading])
@@ -275,6 +299,9 @@ export default function LogScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Current Day Display */}
+      <Text style={styles.currentDay}>{currentDay}</Text>
+      
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Today's Log</Text>
         {todaysMeals.length > 0 && (
@@ -291,7 +318,11 @@ export default function LogScreen() {
       {isLoading ? (
         <Text style={styles.noMealsText}>Loading...</Text>
       ) : todaysMeals.length === 0 ? (
-        <Text style={styles.noMealsText}>No meals logged yet.</Text>
+        <View style={styles.emptyStateContainer}>
+                    <Icon name="list-outline" size={60} color="#ccc" />
+                    <Text style={styles.emptyStateText}>No items selected yet</Text>
+                    <Text style={styles.emptyStateSubtext}>Check off items for them to appear</Text>
+                  </View>
       ) : (
         <FlatList
           data={todaysMeals}
@@ -308,6 +339,12 @@ const styles = StyleSheet.create({
     flex: 1, 
     padding: 20, 
     backgroundColor: '#f8f9fa' 
+  },
+  currentDay: {
+    fontSize: 16,
+    color: COLORS.lightText,
+    marginBottom: 6,
+    fontWeight: '500',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -361,5 +398,23 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: 'bold'
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: 16,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: COLORS.lightText,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
