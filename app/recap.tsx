@@ -12,6 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Meals from './meals';
 
 const RECAP_STORAGE_KEY = 'recap_data';
 const LOG_STORAGE_KEY = 'log_data';
@@ -42,7 +43,9 @@ const loadAllLogs = useCallback(async () => {
     const combinedLogs = [...recapData, ...currentLogs, ...sampleMarchData];
     
     // Sort logs by date (newest first)
-    combinedLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+    combinedLogs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    combinedLogs.forEach(log => {
+    });
     
     setAllLogs(combinedLogs);
   } catch (error) {
@@ -55,94 +58,53 @@ const loadAllLogs = useCallback(async () => {
 const getSampleMarchData = () => {
   const currentYear = new Date().getFullYear();
   return [
-    {
-      date: `${currentYear}-02-05`,
-      meals: [
-        {
-          name: "Breakfast",
-          timeChecked: "08:30 AM",
-          rating: 8.5
-        },
-        {
-          name: "Lunch",
-          timeChecked: "12:45 PM",
-          rating: 6.2
-        }
-      ]
-    },
-    {
-      date: `${currentYear}-02-12`,
-      meals: [
-        {
-          name: "Dinner",
-          timeChecked: "7:15 PM",
-          rating: 9.0,
-        }
-      ]
-    },
-    {
-      date: `${currentYear}-02-15`,
-      meals: [
-        {
-          name: "Breakfast",
-          timeChecked: "07:45 AM",
-          rating: 4.2
-        },
-        {
-          name: "Lunch",
-          timeChecked: "1:30 PM",
-          associatedMeal: {
-            name: "Chicken Salad",
-            rating: 7.8
-          }
-        }
-      ]
-    },
-    {
-      date: `${currentYear}-02-21`,
-      meals: [
-        {
-          name: "Brunch",
-          timeChecked: "10:30 AM",
-          rating: 2.5
-        }
-      ]
-    },
-    {
-      date: `${currentYear}-02-25`,
-      meals: [
-        {
-          name: "Breakfast",
-          timeChecked: "08:00 AM",
-          rating: 6.7
-        },
-        {
-          name: "Lunch",
-          timeChecked: "12:15 PM",
-          rating: 5.4
-        },
-        {
-          name: "Dinner",
-          timeChecked: "6:45 PM",
-          rating: 8.9
-        }
-      ]
-    },
-    {
-      date: `${currentYear}-02-28`,
-      meals: [
-        {
-          name: "Dinner",
-          timeChecked: "7:30 PM",
-          associatedMeal: {
-            name: "Salmon with Vegetables",
-            rating: 9.5
-          }
-        }
-      ]
-    }
-  ];
+    {date: `${currentYear}-02-01`, meals: [{rating: 8.5}]},
+    {date: `${currentYear}-02-02`, meals: [{rating: 9.2}]},
+    {date: `${currentYear}-02-03`, meals: [{rating: 9.0}]},
+    {date: `${currentYear}-02-04`, meals: [{rating: 8.0}]},
+    {date: `${currentYear}-02-05`, meals: [{rating: 7.8}]},
+    {date: `${currentYear}-02-06`, meals: [{rating: 8.9}]},
+    {date: `${currentYear}-02-07`, meals: [{rating: 7.6}]},
+    {date: `${currentYear}-02-08`, meals: [{rating: 6.4}]},
+    {date: `${currentYear}-02-09`, meals: [{rating: 5.4}]},
+    {date: `${currentYear}-02-10`, meals: [{rating: 4.4}]},
+    {date: `${currentYear}-02-11`, meals: [{rating: 5.5}]},
+    {date: `${currentYear}-02-12`, meals: [{rating: 6.2}]},
+    {date: `${currentYear}-02-13`, meals: [{rating: 7.0}]},
+    {date: `${currentYear}-02-14`, meals: [{rating: 5.3}]},
+    {date: `${currentYear}-02-15`, meals: [{rating: 3.7}]},
+    {date: `${currentYear}-02-16`, meals: [{rating: 8.6}]},
+    {date: `${currentYear}-02-17`, meals: [{rating: 9.5}]},
+    {date: `${currentYear}-02-18`, meals: [{rating: 5.9}]},
+    {date: `${currentYear}-02-19`, meals: [{rating: 7.6}]},
+    {date: `${currentYear}-02-20`, meals: [{rating: 9.0}]},
+    {date: `${currentYear}-02-21`, meals: [{rating: 2.2}]},
+    {date: `${currentYear}-02-22`, meals: [{rating: 4.5}]},
+    {date: `${currentYear}-02-23`, meals: [{rating: 6.8}]},
+    {date: `${currentYear}-02-24`, meals: [{rating: 7.1}]},
+    {date: `${currentYear}-02-25`, meals: [{rating: 5.0}]},
+    {date: `${currentYear}-02-26`, meals: [{rating: 3.4}]},
+    {date: `${currentYear}-02-27`, meals: [{rating: 8.9}]},
+    {date: `${currentYear}-02-28`, meals: [{rating: 7.6}]},
+  ]
 };
+const checkAsyncStorage = async () => {
+  try {
+    const recapData = await AsyncStorage.getItem('recap_data');
+    const logData = await AsyncStorage.getItem('log_data');
+
+    console.log('Recap Data:', recapData ? JSON.parse(recapData) : null);
+    console.log('Log Data:', logData ? JSON.parse(logData) : null);
+  } catch (error) {
+    console.error('Failed to retrieve data from AsyncStorage', error);
+  }
+};
+
+// ... then, you can call this function somewhere, like in a useEffect or a button press ...
+
+useEffect(() => {
+  checkAsyncStorage();
+}, []);
 
   // Load logs when screen is focused
   useFocusEffect(
@@ -167,38 +129,54 @@ const getSampleMarchData = () => {
 
   // Format date as YYYY-MM-DD
   const formatDateYMD = (date) => {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    console.log("Input Date:", date);
+    let d;
+    if (typeof date === 'string') {
+      d = new Date(date + 'Z'); // Treat as UTC
+    } else {
+      d = new Date(date.toISOString()); // Convert to ISO string and add 'Z'
+    }
+    const year = d.getUTCFullYear(); // Use UTC methods
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const formatted = `${year}-${month}-${day}`;
+    console.log("Formatted Date (inside formatDateYMD):", formatted);
+    return formatted;
   };
 
   // Format date for display
-  const formatDateForDisplay = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+  const formatDateForDisplay = (dateString: string | number | Date) => {
+    console.log("Formatting Date (inside formatDateForDisplay):", dateString);
+    let date;
+    if (typeof dateString === 'string') {
+      date = new Date(dateString + 'T00:00:00.000Z'); // Treat as UTC
+    } else {
+      date = new Date(dateString);
+    }
+    return date.toLocaleDateString(undefined, {
+      timeZone: 'UTC', // Ensure UTC time zone
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
-
   // Get logs for a specific date
-  const getLogsForDate = (date) => {
+  const getLogsForDate = (date: string | number | Date) => {
     const formattedDate = formatDateYMD(date);
-    return allLogs.find(log => log.date === formattedDate);
+    const foundLog = allLogs.find(log => log.date === formattedDate);
+
+    return foundLog;
   };
 
   // Calculate average rating for a date
-  const getAverageRating = (date) => {
+  const getAverageRating = (date: Date) => {
     const logs = getLogsForDate(date);
     if (!logs || !logs.meals || logs.meals.length === 0) return 0;
     
     let totalRating = 0;
     let mealCount = 0;
     
-    logs.meals.forEach(meal => {
+    logs.meals.forEach((meal: { associatedMeal: { rating: number; }; rating: number; }) => {
       if (meal.associatedMeal) {
         totalRating += meal.associatedMeal.rating;
         mealCount++;
@@ -212,7 +190,7 @@ const getSampleMarchData = () => {
   };
 
   // Get color based on rating
-  const getRatingColor = (rating) => {
+  const getRatingColor = (rating: number) => {
     if (rating === 0) return '#F0F0F0'; // No data
     if (rating < 3) return '#FF6B6B'; // Red for low ratings
     if (rating < 5) return '#FFD166'; // Yellow for medium-low
@@ -222,11 +200,13 @@ const getSampleMarchData = () => {
   };
 
   // Handle day press
-  const handleDayPress = (date) => {
+  const handleDayPress = (date: string | number | Date) => {
     const formattedDate = formatDateYMD(date);
+    console.log("Day Pressed (Formatted):", formattedDate);
     const dayLog = getLogsForDate(date);
-    
+  
     setSelectedDate(formattedDate);
+    console.log("Selected Date:", selectedDate); // Check the state value
     setSelectedDayMeals(dayLog?.meals || []);
     setModalVisible(true);
   };
@@ -284,36 +264,39 @@ const generateCalendarDays = () => {
   // Render each day in the calendar
   const renderDay = ({ item }) => {
     if (item.empty) {
-      return <View style={styles.emptyDay} />;
+        return <View style={styles.emptyDay} />;
     }
-    
+
     return (
-      <TouchableOpacity
-        style={[
-          styles.day,
-          { backgroundColor: item.color },
-          item.hasData && styles.dayWithData
-        ]}
-        onPress={() => item.hasData && handleDayPress(new Date(item.date))}
-        activeOpacity={item.hasData ? 0.6 : 1}
-      >
-        <Text style={[
-          styles.dayText,
-          item.rating >= 7 && styles.darkDayText,
-        ]}>
-          {item.day}
-        </Text>
-        {item.hasData && item.rating > 0 && (
-          <Text style={[
-            styles.ratingText,
-            item.rating >= 7 && styles.darkDayText,
-          ]}>
-            {item.rating.toFixed(1)}
-          </Text>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+            style={[
+                styles.day,
+                { backgroundColor: item.color },
+                item.hasData && styles.dayWithData
+            ]}
+            onPress={() => {
+              console.log("Day Pressed (Raw):", new Date(item.date)); //add this line
+        
+              item.hasData && handleDayPress(new Date(item.date))}}
+            activeOpacity={item.hasData ? 0.6 : 1}
+        >
+            <Text style={[
+                styles.dayText,
+                item.rating >= 7 && styles.darkDayText,
+            ]}>
+                {item.day}
+            </Text>
+            {item.hasData && item.rating > 0 && (
+                <Text style={[
+                    styles.ratingText,
+                    item.rating >= 7 && styles.darkDayText,
+                ]}>
+                    {item.rating.toFixed(1)}
+                </Text>
+            )}
+        </TouchableOpacity>
     );
-  };
+};
 
   // Close modal
   const closeModal = () => {
