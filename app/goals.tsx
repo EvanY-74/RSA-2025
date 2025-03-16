@@ -25,6 +25,7 @@ const COLORS = {
   border: '#EEEEEE',
   success: '#2ECC71',
   progressBar: '#3498DB',
+  placeholderText: '#AAAAAA',
 };
 
 interface Goal {
@@ -214,7 +215,6 @@ export default function GoalsScreen() {
               ]} 
             />
           </View>
-          <Text style={styles.progressText}>{item.progress}%</Text>
         </View>
         
         <View style={styles.controlsContainer}>
@@ -287,26 +287,29 @@ export default function GoalsScreen() {
           <Text style={styles.formTitle}>Add New Goal</Text>
           
           <TextInput
-            style={styles.input}
-            placeholder="Goal Title"
-            value={newGoalTitle}
-            onChangeText={setNewGoalTitle}
-          />
-          
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Description (optional)"
-            value={newGoalDescription}
-            onChangeText={setNewGoalDescription}
-            multiline
-          />
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Target Date (YYYY-MM-DD)"
-            value={newGoalDate}
-            onChangeText={setNewGoalDate}
-          />
+  style={styles.input}
+  placeholder="Goal Title"
+  placeholderTextColor={COLORS.placeholderText}
+  value={newGoalTitle}
+  onChangeText={setNewGoalTitle}
+/>
+
+<TextInput
+  style={[styles.input, styles.textArea]}
+  placeholder="Description (optional)"
+  placeholderTextColor={COLORS.placeholderText}
+  value={newGoalDescription}
+  onChangeText={setNewGoalDescription}
+  multiline
+/>
+
+<TextInput
+  style={styles.input}
+  placeholder="Target Date (YYYY-MM-DD)"
+  placeholderTextColor={COLORS.placeholderText}
+  value={newGoalDate}
+  onChangeText={setNewGoalDate}
+/>
           
           <View style={styles.formButtons}>
             <TouchableOpacity 
@@ -534,6 +537,7 @@ const styles = StyleSheet.create({
       borderWidth: 1,
       borderColor: COLORS.border,
       fontSize: 16,
+      color: COLORS.text, // Explicitly set text color
     },
     textArea: {
       minHeight: 100,

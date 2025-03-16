@@ -7,11 +7,30 @@ import {
   FlatList,
   StyleSheet,
   ScrollView,
+  SafeAreaView,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import Icon from "react-native-vector-icons/Feather";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+
+// Define consistent colors exactly matching Goals page
+const COLORS = {
+  primary: '#2E86C1',
+  secondary: '#27AE60',
+  background: '#F8F9FA',
+  card: '#FFFFFF',
+  text: '#333333',
+  lightText: '#777777',
+  placeholderText: '#AAAAAA', // Added for better placeholder visibility
+  danger: '#E74C3C',
+  border: '#EEEEEE',
+  success: '#2ECC71',
+  progressBar: '#3498DB',
+  warning: '#F39C12',
+  gray: '#95A5A6',
+};
 
 interface Meal {
   id: number;
@@ -339,10 +358,22 @@ const forceIndexRefresh = async () => {
   }
 };
 
-  return (
-    <View style={styles.container}>
-      {!creatingMeal && !viewingMeal && (
-        <>
+return (
+  <SafeAreaView style={styles.container}>
+    <View style={styles.header}>
+      <Text style={styles.screenTitle}>Meals</Text>
+      <Text style={styles.subtitle}>Track your meals and recipes</Text>
+    </View>
+
+    {!creatingMeal && !viewingMeal && (
+      <>
+        {meals.length === 0 ? (
+          <View style={styles.emptyStateContainer}>
+            <Icon name="coffee" size={60} color="#ccc" />
+            <Text style={styles.emptyStateText}>No meals added yet</Text>
+            <Text style={styles.emptyStateSubtext}>Tap the button below to add your first meal</Text>
+          </View>
+        ) : (
           <FlatList
             data={meals}
             keyExtractor={(item) => item.id.toString()}
@@ -357,401 +388,364 @@ const forceIndexRefresh = async () => {
                 </TouchableOpacity>
               </View>
             )}
+            contentContainerStyle={styles.listContainer}
           />
-          <TouchableOpacity
-            style={styles.addMealButton}
-            onPress={() => setCreatingMeal(true)}
-          >
-            <Icon name="plus" size={24} color="white" />
-          </TouchableOpacity>
-        </>
-      )}
+        )}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setCreatingMeal(true)}
+        >
+          <Icon name="plus" size={24} color="white" />
+          <Text style={styles.addButtonText}>Add Meal</Text>
+        </TouchableOpacity>
+      </>
+    )}
 
-      {creatingMeal && (
-        <ScrollView style={styles.mealView}>
-          <Text style={styles.header}>
-            {editingMeal ? "Edit Meal" : "Add a New Meal"}
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Meal Name"
-            value={mealName}
-            onChangeText={setMealName}
-          />
-          <TextInput
-            style={[styles.input, styles.largeInput]}
-            placeholder="Ingredients"
-            value={mealIngredients}
-            onChangeText={setMealIngredients}
-            multiline
-          />
-          <TextInput
-            style={[styles.input, styles.largeInput]}
-            placeholder="Recipe"
-            value={mealRecipe}
-            onChangeText={setMealRecipe}
-            multiline
-          />
-          <Text>Health Rating: {mealRating}/10</Text>
-          <Slider
-            style={{ width: "100%", height: 40 }}
-            minimumValue={0}
-            maximumValue={10}
-            step={1}
-            value={mealRating}
-            onValueChange={setMealRating}
-          />
+    {creatingMeal && (
+      <View style={styles.formContainer}>
+        <Text style={styles.formTitle}>
+          {editingMeal ? "Edit Meal" : "Add New Meal"}
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Meal Name"
+          placeholderTextColor={COLORS.placeholderText}
+          value={mealName}
+          onChangeText={setMealName}
+        />
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Ingredients"
+          placeholderTextColor={COLORS.placeholderText}
+          value={mealIngredients}
+          onChangeText={setMealIngredients}
+          multiline
+        />
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Recipe"
+          placeholderTextColor={COLORS.placeholderText}
+          value={mealRecipe}
+          onChangeText={setMealRecipe}
+          multiline
+        />
+        <Text style={styles.labelText}>Health Rating: {mealRating}/10</Text>
+        <Slider
+          style={{ width: "100%", height: 40 }}
+          minimumValue={0}
+          maximumValue={10}
+          step={1}
+          value={mealRating}
+          onValueChange={setMealRating}
+          minimumTrackTintColor={COLORS.primary}
+          maximumTrackTintColor={COLORS.border}
+          thumbTintColor={COLORS.secondary}
+        />
+        <View style={styles.formButtons}>
           <TouchableOpacity onPress={handleSaveMeal} style={styles.saveButton}>
-            <Text style={styles.buttonText}>Save</Text>
+            <Text style={styles.buttonText}>Save Meal</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={resetForm} style={styles.cancelButton}>
             <Text style={styles.buttonText}>Cancel</Text>
           </TouchableOpacity>
-        </ScrollView>
-      )}
-
-      {viewingMeal && (
-        <View style={styles.mealView}>
-          <Text style={styles.header}>{viewingMeal.name}</Text>
-          <Text style={styles.mealText}>
-            <Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}
-          </Text>
-          <Text style={styles.mealText}>
-            <Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}
-          </Text>
-          <Text style={styles.mealText}>
-            <Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10
-          </Text>
-
-          <Picker
-  selectedValue={selectedChecklistItem}
-  onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
-  style={styles.picker}
-  itemStyle={styles.pickerItem} // Add this line
->
-  <Picker.Item label="Select checklist item..." value="" />
-  {checklistItems.map((item) => (
-    <Picker.Item 
-      key={item.id} 
-      label={item.name} 
-      value={item.name} 
-      color="#000000" // Force text color directly on items
-    />
-  ))}
-</Picker>
-
-          <TouchableOpacity onPress={handleLogMeal} style={styles.logButton}>
-            <Text style={styles.buttonText}>Log Meal</Text>
-          </TouchableOpacity>
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity onPress={handleEditMeal} style={styles.editButton}>
-              <Text style={styles.buttonText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleDeleteMeal(viewingMeal.id)}
-              style={styles.deleteButton}
-            >
-              <Text style={styles.buttonText}>Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setViewingMeal(null)}
-              style={styles.backButton}
-            >
-              <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
-          </View>
         </View>
-      )}
+      </View>
+    )}
+
+{viewingMeal && (
+  <ScrollView contentContainerStyle={styles.scrollableContent}>
+    <View style={styles.mealView}>
+      <Text style={styles.mealHeader}>{viewingMeal.name}</Text>
+      <Text style={styles.mealText}>
+        <Text style={styles.bold}>Ingredients:</Text> {viewingMeal.ingredients}
+      </Text>
+      <Text style={styles.mealText}>
+        <Text style={styles.bold}>Recipe:</Text> {viewingMeal.recipe}
+      </Text>
+      <Text style={styles.mealText}>
+        <Text style={styles.bold}>Rating:</Text> {viewingMeal.rating}/10
+      </Text>
+      
+      <View style={styles.pickerContainer}>
+        <Text style={styles.labelText}>Log as meal:</Text>
+        <Picker
+          selectedValue={selectedChecklistItem}
+          onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Select meal type..." value="" color={COLORS.placeholderText} />
+          {checklistItems.map((item) => (
+            <Picker.Item 
+              key={item.id} 
+              label={item.name} 
+              value={item.name} 
+              color={COLORS.text}
+            />
+          ))}
+        </Picker>
+      </View>
+
+      <TouchableOpacity onPress={handleLogMeal} style={styles.logButton}>
+        <Text style={styles.buttonText}>Log Meal</Text>
+      </TouchableOpacity>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity onPress={handleEditMeal} style={styles.editButton}>
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => handleDeleteMeal(viewingMeal.id)}
+          style={styles.deleteButton}
+        >
+          <Text style={styles.buttonText}>Delete</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setViewingMeal(null)}
+          style={styles.backButton}
+        >
+          <Text style={styles.buttonText}>Back</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-  );
+  </ScrollView>
+)}
+  </SafeAreaView>
+);
 }
 
-// Define consistent colors similar to Goals page
-const COLORS = {
-  primary: '#2E86C1',
-  secondary: '#27AE60',
-  background: '#F8F9FA',
-  card: '#FFFFFF',
-  text: '#333333',
-  lightText: '#777777',
-  danger: '#E74C3C',
-  border: '#EEEEEE',
-  success: '#2ECC71',
-  progressBar: '#3498DB',
-  warning: '#F39C12',
-  gray: '#95A5A6',
-};
-
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: COLORS.background, 
-    padding: 20 
-  },
-  header: { 
-    fontSize: 28, 
-    fontWeight: "bold", 
-    color: COLORS.text,
-    marginBottom: 12 
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.lightText,
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  mealText: { 
-    fontSize: 16, 
-    color: COLORS.text,
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  // Update these styles in your StyleSheet:
-
+container: {
+  flex: 1,
+  backgroundColor: COLORS.background,
+},
+header: {
+  padding: 20,
+  paddingBottom: 12,
+},
+screenTitle: {
+  fontSize: 28,
+  fontWeight: 'bold',
+  color: COLORS.text,
+},
+subtitle: {
+  fontSize: 14,
+  color: COLORS.lightText,
+  marginTop: 4,
+},
+listContainer: {
+  padding: 16,
+  paddingBottom: 100,
+},
+card: {
+  backgroundColor: COLORS.card,
+  borderRadius: 12,
+  padding: 16,
+  marginBottom: 16,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 3,
+},
+mealName: {
+  fontSize: 18,
+  fontWeight: "600",
+  color: COLORS.text,
+},
+viewButton: {
+  backgroundColor: COLORS.primary,
+  paddingVertical: 8,
+  paddingHorizontal: 12,
+  borderRadius: 6,
+  marginTop: 10,
+  alignItems: "center",
+},
+buttonText: {
+  color: "white",
+  fontWeight: "600",
+  fontSize: 14,
+},
+addButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: COLORS.secondary,
+  paddingVertical: 14,
+  paddingHorizontal: 20,
+  borderRadius: 50,
+  justifyContent: 'center',
+  width: '80%',
+  alignSelf: 'center',
+  position: 'absolute',
+  bottom: 25,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.15,
+  shadowRadius: 5,
+  elevation: 5,
+},
+addButtonText: {
+  color: 'white',
+  fontWeight: '600',
+  fontSize: 16,
+  marginLeft: 8,
+},
+emptyStateContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 40,
+},
+emptyStateText: {
+  fontSize: 18,
+  fontWeight: '600',
+  color: COLORS.text,
+  marginTop: 16,
+},
+emptyStateSubtext: {
+  fontSize: 14,
+  color: COLORS.lightText,
+  textAlign: 'center',
+  marginTop: 8,
+},
+formContainer: {
+  padding: 20,
+},
+formTitle: {
+  fontSize: 22,
+  fontWeight: '600',
+  color: COLORS.text,
+  marginBottom: 16,
+},
+input: {
+  backgroundColor: COLORS.card,
+  borderRadius: 8,
+  padding: 12,
+  marginBottom: 16,
+  borderWidth: 1,
+  borderColor: COLORS.border,
+  fontSize: 16,
+  color: COLORS.text,
+},
+textArea: {
+  minHeight: 100,
+  textAlignVertical: "top",
+},
+labelText: {
+  fontSize: 14,
+  color: COLORS.text,
+  marginBottom: 8,
+},
+formButtons: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 16,
+},
+saveButton: {
+  backgroundColor: COLORS.secondary,
+  paddingVertical: 14,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  alignItems: "center",
+  justifyContent: "center",
+  flex: 1,
+  marginRight: 8,
+},
+cancelButton: {
+  backgroundColor: COLORS.lightText,
+  paddingVertical: 14,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  alignItems: "center",
+  justifyContent: "center",
+  flex: 1,
+  marginLeft: 8,
+},
+mealView: {
+  backgroundColor: COLORS.card,
+  borderRadius: 12,
+  padding: 16,
+  margin: 16,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 3,
+},
+mealHeader: {
+  fontSize: 22,
+  fontWeight: "600",
+  color: COLORS.text,
+  marginBottom: 12,
+},
+mealText: {
+  fontSize: 16,
+  color: COLORS.text,
+  marginBottom: 10,
+  lineHeight: 22,
+},
+bold: {
+  fontWeight: "bold"
+},
+pickerContainer: {
+  marginVertical: 12,
+},
 picker: {
   backgroundColor: COLORS.card,
-  marginVertical: 12,
   borderWidth: 1,
   borderColor: COLORS.border,
   borderRadius: 8,
-  color: '#000000', // Force black text color for visibility
-  padding: 8,
+  marginTop: 4,
+  color: COLORS.text,
 },
-
-// Add this new style for the picker item text:
-pickerItem: {
-  color: '#000000', // Force black text for the dropdown items
-},
-
-// If you need a dark mode option:
-pickerDarkMode: {
-  backgroundColor: COLORS.card,
-  marginVertical: 12,
-  borderWidth: 1,
-  borderColor: COLORS.border,
+logButton: {
+  backgroundColor: COLORS.primary,
+  paddingVertical: 14,
+  paddingHorizontal: 20,
   borderRadius: 8,
-  color: '#FFFFFF', // White text for dark mode
-  padding: 8,
+  marginTop: 16,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 2,
 },
-  logButton: {
-    backgroundColor: COLORS.success,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  bold: { 
-    fontWeight: "bold" 
-  },
-  input: {
-    width: "100%",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    backgroundColor: COLORS.card,
-    fontSize: 16,
-    marginBottom: 16,
-    color: COLORS.text,
-  },
-  largeInput: {
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
-  deleteButton: {
-    backgroundColor: COLORS.danger,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  editButton: {
-    backgroundColor: COLORS.warning,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  backButton: {
-    backgroundColor: COLORS.gray,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 1,
-    marginLeft: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 24,
-  },
-  buttonText: { 
-    color: "#FFF", 
-    fontWeight: "600", 
-    textAlign: "center",
-    fontSize: 16,
-  },
-  addMealButton: {
-    position: "absolute",
-    bottom: 25,
-    right: 20,
-    backgroundColor: COLORS.secondary,
-    padding: 16,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 5,
-    width: 60,
-    height: 60,
-  },
-  card: {
-    backgroundColor: COLORS.card,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  mealName: { 
-    fontSize: 18, 
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  viewButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 6,
-    marginTop: 10,
-    alignItems: "center",
-  },
-  mealView: {
-    backgroundColor: COLORS.card,
-    padding: 20,
-    borderRadius: 12,
-    marginTop: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  saveButton: {
-    backgroundColor: COLORS.success,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cancelButton: {
-    backgroundColor: COLORS.danger,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  ratingContainer: {
-    marginVertical: 16,
-  },
-  ratingText: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 8,
-    color: COLORS.text,
-  },
-  sliderContainer: {
-    width: "100%",
-    height: 40,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: COLORS.lightText,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  emptyStateText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 16,
-  },
-  emptyStateSubtext: {
-    fontSize: 14,
-    color: COLORS.lightText,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  mealRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 10,
-  },
-  ratingDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginRight: 4,
-  },
-  labelText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: COLORS.lightText,
-    marginBottom: 6,
-  },
+buttonRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginTop: 24,
+},
+scrollableContent: {
+  flexGrow: 1,
+  paddingBottom: 20, // Adds some space at the bottom when scrolling
+},
+editButton: {
+  backgroundColor: COLORS.warning,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  borderRadius: 8,
+  flex: 1,
+  marginRight: 8,
+  alignItems: "center",
+  justifyContent: "center",
+},
+deleteButton: {
+  backgroundColor: COLORS.danger,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  borderRadius: 8,
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center",
+},
+backButton: {
+  backgroundColor: COLORS.gray,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  borderRadius: 8,
+  flex: 1,
+  marginLeft: 8,
+  alignItems: "center",
+  justifyContent: "center",
+},
 });

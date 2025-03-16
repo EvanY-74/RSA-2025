@@ -411,8 +411,6 @@ const styles = StyleSheet.create({
     flex: 1,
     aspectRatio: 1,
     margin: 4,
-    backgroundColor: 'transparent', // Ensure this is transparent
-
   },
   dayText: {
     fontSize: 16,
@@ -443,83 +441,84 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 12,
-    marginBottom: 6,
-  },
-  legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#555555',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '85%',
-    maxHeight: '70%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 12,
+      marginBottom: 6,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  modalScrollView: {
-    maxHeight: '90%',
-  },
-  noMealsText: {
-    textAlign: 'center',
-    paddingVertical: 20,
-    color: '#888888',
-    fontStyle: 'italic',
-  },
-  mealItem: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#06D6A0',
-  },
-  mealName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  mealDetails: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 4,
-  },
-  boldText: {
-    fontWeight: '600',
-  }
-});
+    
+    legendColor: {
+      width: 16,
+      height: 16,
+      borderRadius: 4,
+      marginRight: 6,
+    },
+    legendText: {
+      fontSize: 12,
+      color: '#555555',
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+      width: '85%',
+      maxHeight: '70%',
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      padding: 20,
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 15,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: '#EEEEEE',
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
+    modalScrollView: {
+      maxHeight: '90%',
+    },
+    noMealsText: {
+      textAlign: 'center',
+      paddingVertical: 20,
+      color: '#888888',
+      fontStyle: 'italic',
+    },
+    mealItem: {
+      backgroundColor: '#F8F9FA',
+      borderRadius: 8,
+      padding: 15,
+      marginBottom: 10,
+      borderLeftWidth: 4,
+      borderLeftColor: '#06D6A0',
+    },
+    mealName: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 6,
+    },
+    mealDetails: {
+      fontSize: 14,
+      color: '#666666',
+      marginBottom: 4,
+    },
+    boldText: {
+      fontWeight: '600',
+    }
+  });

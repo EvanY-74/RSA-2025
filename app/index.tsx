@@ -757,16 +757,16 @@ const updateLogForMeal = async (meal: { id: any; name: any; checked: any; editin
             </View>
           )}
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={styles.addMealButton} 
-              onPress={addMeal}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={24} color="white" />
-              <Text style={styles.buttonText}>Add Meal</Text>
-            </TouchableOpacity>
-          </View>
+<View style={styles.buttonContainer}>
+  <TouchableOpacity 
+    style={styles.addMealButton} 
+    onPress={addMeal}
+    activeOpacity={0.8}
+  >
+    <Ionicons name="add" size={24} color="white" />
+    <Text style={styles.buttonText}>Add Item</Text>
+  </TouchableOpacity>
+</View>
         </SafeAreaView>
       </KeyboardAvoidingView>
     </GestureHandlerRootView>
@@ -951,31 +951,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.lightText,
   },
-
-  buttonText: { 
-    color: '#fff', 
-    fontSize: 16, 
-    fontWeight: 'bold', 
-    marginLeft: 5 
-  },
-
   addMealButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#27ae60',
-    paddingVertical: 14,     // Taller button
-    paddingHorizontal: 20,   // Wider button
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 50,
     justifyContent: 'center',
-    width: '80%',            // Not too wide
+    width: '80%',
     alignSelf: 'center',
     position: 'absolute',
-    bottom: 25,              // Slightly higher
-    shadowColor: "#000",     // Add shadow to button
+    bottom: 25,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 5,
-    elevation: 5
+    elevation: 5,
+  },
+  
+  buttonText: { 
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 8,
   },
   emptyState: {
     alignItems: 'center',
@@ -1001,7 +1000,7 @@ const styles = StyleSheet.create({
   },
   
   buttonContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     paddingBottom: 25,
     paddingTop: 10
   },
