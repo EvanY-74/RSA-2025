@@ -70,13 +70,13 @@ export default function LogScreen() {
         // Add yesterday's logs to recap
         const logData = JSON.parse(storedLog);
         // Find yesterday's log if it exists
-        const yesterdaysLog = logData.find(log => log.date === lastLogDate);
+        const yesterdaysLog = logData.find((log: { date: string; }) => log.date === lastLogDate);
         
         if (yesterdaysLog) {
           pastLogs.push(yesterdaysLog);
           
           // Remove yesterday's log from the current log data
-          const updatedLogData = logData.filter(log => log.date !== lastLogDate);
+          const updatedLogData = logData.filter((log: { date: string; }) => log.date !== lastLogDate);
           
           // Save updated log data (without yesterday's log)
           await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(updatedLogData));
@@ -107,10 +107,10 @@ export default function LogScreen() {
       const mealsData = JSON.parse(storedMeals);
       
       // Filter to find only checked meals for today
-      const checkedMeals = mealsData.filter(meal => meal.checked === true);
+      const checkedMeals = mealsData.filter((meal: { checked: boolean; }) => meal.checked === true);
       
       // Format them for display, preserving the original structure including associatedMeal
-      const formattedMeals = checkedMeals.map(meal => {
+      const formattedMeals = checkedMeals.map((meal: { id: any; name: any; rating: any; timeChecked: any; associatedMeal: { id: any; name: any; rating: any; }; }) => {
         // Create a properly formatted meal object
         const formattedMeal = {
           id: meal.id,
@@ -139,7 +139,7 @@ export default function LogScreen() {
       let logData = storedLog ? JSON.parse(storedLog) : [];
       
       // Find today's log entry if it exists
-      const todayLogIndex = logData.findIndex(log => log.date === today);
+      const todayLogIndex = logData.findIndex((log: { date: string; }) => log.date === today);
       
       if (todayLogIndex >= 0) {
         // Update existing entry
@@ -185,7 +185,7 @@ export default function LogScreen() {
                 let mealsData = JSON.parse(storedMeals);
                 
                 // Completely uncheck all meals and reset their properties
-                mealsData = mealsData.map(meal => ({
+                mealsData = mealsData.map((meal: any) => ({
                   ...meal,
                   checked: false,
                   rating: 0,
@@ -202,7 +202,7 @@ export default function LogScreen() {
               if (storedLog) {
                 let logData = JSON.parse(storedLog);
                 // Filter out today's entry
-                logData = logData.filter(log => log.date !== today);
+                logData = logData.filter((log: { date: string; }) => log.date !== today);
                 await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
                 setLogData(logData);
               }
@@ -261,7 +261,7 @@ export default function LogScreen() {
   }, [isLoading]);
 
   // Generate a safe key for the FlatList items
-  const getItemKey = (item, index) => {
+  const getItemKey = (item: { id: { toString: () => any; }; }, index: any) => {
     return item && item.id ? item.id.toString() : `meal-${index}`;
   };
 
