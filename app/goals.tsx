@@ -222,14 +222,14 @@ export default function GoalsScreen() {
             style={styles.progressButton}
             onPress={() => updateProgress(item.id, Math.min(item.progress + 10, 100))}
           >
-            <Text style={styles.buttonText}>+10%</Text>
+            <Text style={styles.buttonText}>Add</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[styles.progressButton, styles.decreaseButton]}
             onPress={() => updateProgress(item.id, Math.max(item.progress - 10, 0))}
           >
-            <Text style={styles.buttonText}>-10%</Text>
+            <Text style={styles.buttonText}>Subtract</Text>
           </TouchableOpacity>
           
           {!item.isCompleted ? (
