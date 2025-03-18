@@ -6,6 +6,7 @@ import MealsScreen from './meals';
 import LogScreen from './log';
 import RecapScreen from './recap';
 import SettingsScreen from './settings';
+import GoalsScreen from './goals';
 
 
 const Tab = createBottomTabNavigator();
@@ -21,13 +22,15 @@ export default function Layout() {
             if (route.name === 'Checklist') {
               iconName = 'checkbox-outline';
             } else if (route.name === 'Meals') {
-              iconName = 'fast-food-outline';
+              iconName = 'nutrition-outline';
             } else if (route.name === 'Log') {
               iconName = 'document-text-outline';
             } else if (route.name === 'Recap') {
               iconName = 'calendar-outline';
-            } else {
+            } else if (route.name == 'Settings') {
               iconName = 'settings-outline';
+            } else if (route.name == 'Goals') {
+              iconName = 'clipboard-outline';
             }
 
             return <Ionicons name={iconName} size={size} color={color} />;
@@ -40,7 +43,9 @@ export default function Layout() {
         <Tab.Screen name="Meals" component={MealsScreen} />
         <Tab.Screen name="Log" component={LogScreen} />
         <Tab.Screen name="Recap" component={RecapScreen} />
+        <Tab.Screen name='Goals' component={GoalsScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
+   
       </Tab.Navigator>
     </View>
   );

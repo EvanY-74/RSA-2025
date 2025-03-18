@@ -45,6 +45,41 @@ const presetMeals: Meal[] = [
     recipe: "Toast bread, mash avocado, cook egg, assemble, season.",
     rating: 8,
   },
+  {
+    id: 3,
+    name: "Mediterranean Chickpea Bowl",
+    ingredients: "Chickpeas, cucumber, cherry tomatoes, red onion, feta cheese, olive oil, lemon juice, herbs",
+    recipe: "Combine chickpeas with diced vegetables. Add crumbled feta, drizzle with olive oil and lemon juice. Sprinkle with herbs and serve.",
+    rating: 8,
+  },
+  {
+    id: 4,
+    name: "Grilled Chicken Salad",
+    ingredients: "Chicken breast, mixed greens, bell peppers, carrots, almonds, balsamic vinaigrette",
+    recipe: "Grill seasoned chicken breast. Slice and arrange over mixed greens with chopped vegetables. Top with almonds and drizzle with dressing.",
+    rating: 7,
+  },
+  {
+    id: 5,
+    name: "Vegetable Stir-Fry with Tofu",
+    ingredients: "Firm tofu, broccoli, carrots, snap peas, bell peppers, garlic, ginger, soy sauce, sesame oil",
+    recipe: "Press and cube tofu. Sauté with garlic and ginger. Add vegetables and cook until tender-crisp. Season with soy sauce and sesame oil.",
+    rating: 8,
+  },
+  {
+    id: 6,
+    name: "Sweet Potato Black Bean Burrito",
+    ingredients: "Sweet potatoes, black beans, brown rice, avocado, red onion, lime, cilantro, tortilla",
+    recipe: "Roast diced sweet potatoes. Mix with cooked black beans and brown rice. Add diced avocado, red onion, and cilantro. Squeeze lime juice, wrap in tortilla.",
+    rating: 9,
+  },
+  {
+    id: 7,
+    name: "Berry Protein Smoothie Bowl",
+    ingredients: "Mixed berries, Greek yogurt, protein powder, almond milk, chia seeds, granola, honey",
+    recipe: "Blend berries, yogurt, protein powder and almond milk until smooth. Pour into bowl. Top with chia seeds, granola, and a drizzle of honey.",
+    rating: 7,
+  },
 ];
 
 export default function Meals() {
@@ -89,6 +124,32 @@ export default function Meals() {
   
     loadChecklistItems();
   }, []);
+  // Add this useEffect to the Meals component
+useEffect(() => {
+  // Check for log clearing events
+  const checkForLogClearing = async () => {
+    try {
+      const logClearedTimestamp = await AsyncStorage.getItem('log_cleared_timestamp');
+      
+      if (logClearedTimestamp) {
+        // If log was cleared, reset the selection state in this component
+        setSelectedChecklistItem("");
+        
+        // Clear the timestamp to avoid repeated processing
+        await AsyncStorage.removeItem('log_cleared_timestamp');
+      }
+    } catch (error) {
+      console.error('Error checking for log clearing:', error);
+    }
+  };
+  
+  const interval = setInterval(checkForLogClearing, 1000);
+  
+  // Check once immediately
+  checkForLogClearing();
+  
+  return () => clearInterval(interval);
+}, []);
 
   const saveChecklistItems = async (items: ChecklistItem[]) => {
     try {
@@ -363,15 +424,21 @@ const forceIndexRefresh = async () => {
           </Text>
 
           <Picker
-            selectedValue={selectedChecklistItem}
-            onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Select checklist item..." value="" />
-            {checklistItems.map((item) => (
-              <Picker.Item key={item.id} label={item.name} value={item.name} />
-            ))}
-          </Picker>
+  selectedValue={selectedChecklistItem}
+  onValueChange={(itemValue) => setSelectedChecklistItem(itemValue)}
+  style={styles.picker}
+  itemStyle={styles.pickerItem} // Add this line
+>
+  <Picker.Item label="Select checklist item..." value="" />
+  {checklistItems.map((item) => (
+    <Picker.Item 
+      key={item.id} 
+      label={item.name} 
+      value={item.name} 
+      color="#000000" // Force text color directly on items
+    />
+  ))}
+</Picker>
 
           <TouchableOpacity onPress={handleLogMeal} style={styles.logButton}>
             <Text style={styles.buttonText}>Log Meal</Text>
@@ -400,131 +467,291 @@ const forceIndexRefresh = async () => {
   );
 }
 
+// Define consistent colors similar to Goals page
+const COLORS = {
+  primary: '#2E86C1',
+  secondary: '#27AE60',
+  background: '#F8F9FA',
+  card: '#FFFFFF',
+  text: '#333333',
+  lightText: '#777777',
+  danger: '#E74C3C',
+  border: '#EEEEEE',
+  success: '#2ECC71',
+  progressBar: '#3498DB',
+  warning: '#F39C12',
+  gray: '#95A5A6',
+};
+
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: "#F5F5F5", 
+    backgroundColor: COLORS.background, 
     padding: 20 
   },
   header: { 
-    fontSize: 22, 
+    fontSize: 28, 
     fontWeight: "bold", 
-    marginBottom: 10 
+    color: COLORS.text,
+    marginBottom: 12 
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.lightText,
+    marginTop: 4,
+    marginBottom: 16,
   },
   mealText: { 
     fontSize: 16, 
-    marginBottom: 5 
+    color: COLORS.text,
+    marginBottom: 8,
+    lineHeight: 22,
   },
-  picker: {
-    backgroundColor: "#FFF",
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: "#000",
-    borderRadius: 8,
-    color: "#000",
-  },
+  // Update these styles in your StyleSheet:
+
+picker: {
+  backgroundColor: COLORS.card,
+  marginVertical: 12,
+  borderWidth: 1,
+  borderColor: COLORS.border,
+  borderRadius: 8,
+  color: '#000000', // Force black text color for visibility
+  padding: 8,
+},
+
+// Add this new style for the picker item text:
+pickerItem: {
+  color: '#000000', // Force black text for the dropdown items
+},
+
+// If you need a dark mode option:
+pickerDarkMode: {
+  backgroundColor: COLORS.card,
+  marginVertical: 12,
+  borderWidth: 1,
+  borderColor: COLORS.border,
+  borderRadius: 8,
+  color: '#FFFFFF', // White text for dark mode
+  padding: 8,
+},
   logButton: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 10,
+    backgroundColor: COLORS.success,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   bold: { 
     fontWeight: "bold" 
   },
   input: {
     width: "100%",
-    padding: 10,
+    padding: 12,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: COLORS.border,
     borderRadius: 8,
-    backgroundColor: "white",
+    backgroundColor: COLORS.card,
     fontSize: 16,
+    marginBottom: 16,
+    color: COLORS.text,
   },
   largeInput: {
-    width: "100%",
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 8,
-    backgroundColor: "white",
-    fontSize: 16,
-    minHeight: 80,
+    minHeight: 100,
     textAlignVertical: "top",
   },
   deleteButton: {
-    backgroundColor: "#FF5252",
-    padding: 12,
-    borderRadius: 6,
+    backgroundColor: COLORS.danger,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   editButton: {
-    backgroundColor: "#FFA726",
-    padding: 12,
-    borderRadius: 6,
+    backgroundColor: COLORS.warning,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     flex: 1,
     marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   backButton: {
-    backgroundColor: "#757575",
-    padding: 12,
-    borderRadius: 6,
+    backgroundColor: COLORS.gray,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     flex: 1,
     marginLeft: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
+    marginTop: 24,
   },
   buttonText: { 
     color: "#FFF", 
-    fontWeight: "bold", 
-    textAlign: "center" 
+    fontWeight: "600", 
+    textAlign: "center",
+    fontSize: 16,
   },
   addMealButton: {
     position: "absolute",
-    bottom: 20,
+    bottom: 25,
     right: 20,
-    backgroundColor: "#2196F3",
-    padding: 15,
+    backgroundColor: COLORS.secondary,
+    padding: 16,
     borderRadius: 50,
     alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 5,
+    width: 60,
+    height: 60,
   },
   card: {
-    backgroundColor: "#FFF",
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
+    backgroundColor: COLORS.card,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   mealName: { 
     fontSize: 18, 
-    fontWeight: "bold" 
+    fontWeight: "600",
+    color: COLORS.text,
   },
   viewButton: {
-    backgroundColor: "#1976D2",
-    padding: 10,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 6,
     marginTop: 10,
+    alignItems: "center",
   },
   mealView: {
-    backgroundColor: "#FFF",
+    backgroundColor: COLORS.card,
     padding: 20,
-    borderRadius: 8,
-    marginTop: 20,
+    borderRadius: 12,
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   saveButton: {
-    backgroundColor: "#4CAF50",
-    padding: 12,
+    backgroundColor: COLORS.success,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
-    marginVertical: 5,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cancelButton: {
-    backgroundColor: "#D32F2F",
-    padding: 12,
+    backgroundColor: COLORS.danger,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
-    marginVertical: 5,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  ratingContainer: {
+    marginVertical: 16,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+    color: COLORS.text,
+  },
+  sliderContainer: {
+    width: "100%",
+    height: 40,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.lightText,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: 16,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: COLORS.lightText,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  mealRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 10,
+  },
+  ratingDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 4,
+  },
+  labelText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: COLORS.lightText,
+    marginBottom: 6,
   },
 });
