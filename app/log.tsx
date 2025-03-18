@@ -11,10 +11,17 @@ const LAST_LOG_DATE_KEY = 'last_log_date';
 export default function LogScreen() {
   const [logData, setLogData] = useState([]);
   const [todaysMeals, setTodaysMeals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Run once when component mounts
   useEffect(() => {
-    moveLogsToRecap();
+    const initializeApp = async () => {
+      await moveLogsToRecap();
+      await loadLog();
+      setIsLoading(false);
+    };
+    
+    initializeApp();
   }, []);
 
   const moveLogsToRecap = async () => {
@@ -63,36 +70,71 @@ export default function LogScreen() {
     }
   };
 
+  // Load meals data directly from meals_data storage
   const loadLog = async () => {
     try {
-      console.log('Loading log data...');
-      const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+      // Get all the meals data
+      const storedMeals = await AsyncStorage.getItem('meals_data');
       
-      if (storedLog) {
-        const logData = JSON.parse(storedLog);
-        console.log('Log data loaded:', logData);
-        setLogData(logData);
-        
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
-        
-        // Find today's log entry
-        const todayLog = logData.find(log => log.date === today);
-        console.log('Today\'s log:', todayLog);
-        
-        if (todayLog && todayLog.meals) {
-          setTodaysMeals(todayLog.meals);
-        } else {
-          setTodaysMeals([]);
-        }
-      } else {
-        console.log('No log data found');
-        setLogData([]);
+      if (!storedMeals) {
         setTodaysMeals([]);
+        return;
       }
+      
+      const mealsData = JSON.parse(storedMeals);
+      
+      // Filter to find only checked meals for today
+      const checkedMeals = mealsData.filter(meal => meal.checked === true);
+      
+      // Format them for display, preserving the original structure including associatedMeal
+      const formattedMeals = checkedMeals.map(meal => {
+        // Create a properly formatted meal object
+        const formattedMeal = {
+          id: meal.id,
+          name: meal.name,
+          rating: meal.rating || 0,
+          timeChecked: meal.timeChecked || new Date().toLocaleTimeString()
+        };
+        
+        // If this meal has an associated meal, include that information
+        if (meal.associatedMeal) {
+          formattedMeal.associatedMeal = {
+            id: meal.associatedMeal.id,
+            name: meal.associatedMeal.name,
+            rating: meal.associatedMeal.rating || 0
+          };
+        }
+        
+        return formattedMeal;
+      });
+      
+      setTodaysMeals(formattedMeals);
+      
+      // Update the log data for historical purposes
+      const today = new Date().toISOString().split('T')[0];
+      const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+      let logData = storedLog ? JSON.parse(storedLog) : [];
+      
+      // Find today's log entry if it exists
+      const todayLogIndex = logData.findIndex(log => log.date === today);
+      
+      if (todayLogIndex >= 0) {
+        // Update existing entry
+        logData[todayLogIndex].meals = formattedMeals;
+      } else if (formattedMeals.length > 0) {
+        // Only create a new entry if there are meals to log
+        logData.push({
+          date: today,
+          meals: formattedMeals
+        });
+      }
+      
+      // Save updated log data
+      await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
+      setLogData(logData);
+      
     } catch (error) {
-      console.error('Failed to load log data', error);
-      setLogData([]);
+      console.error('Failed to load meals data', error);
       setTodaysMeals([]);
     }
   };
@@ -111,44 +153,49 @@ export default function LogScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              // Get today's date
+              // 1. Get today's date
               const today = new Date().toISOString().split('T')[0];
               
-              // Get current log data
-              const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
-              if (!storedLog) return;
-              
-              let logData = JSON.parse(storedLog);
-              
-              // Remove today's entry from the log data
-              logData = logData.filter(log => log.date !== today);
-              
-              // Save the updated log data
-              await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
-              
-              // Also need to update the meals list to uncheck any checked meals
+              // 2. Clear all meals (uncheck and reset ratings)
               const storedMeals = await AsyncStorage.getItem('meals_data');
               if (storedMeals) {
                 let mealsData = JSON.parse(storedMeals);
                 
-                // Uncheck all meals
+                // Completely uncheck all meals and reset their properties
                 mealsData = mealsData.map(meal => ({
                   ...meal,
                   checked: false,
-                  rating: 0
+                  rating: 0,
+                  timeChecked: null,
+                  associatedMeal: null // Clear any meal associations
                 }));
                 
                 // Save the updated meals
                 await AsyncStorage.setItem('meals_data', JSON.stringify(mealsData));
-                
-                // Update the timestamp to trigger sync in other screens
-                await AsyncStorage.setItem('meals_updated_timestamp', Date.now().toString());
               }
               
-              // Update state to show empty log
+              // 3. Remove today's log entry completely
+              const storedLog = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+              if (storedLog) {
+                let logData = JSON.parse(storedLog);
+                // Filter out today's entry
+                logData = logData.filter(log => log.date !== today);
+                await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
+                setLogData(logData);
+              }
+              
+              // 4. Update state to show empty log
               setTodaysMeals([]);
+              
+              // 5. Create a force refresh signal by setting a unique timestamp
+              const clearTimestamp = Date.now().toString();
+              await AsyncStorage.setItem('meals_updated_timestamp', clearTimestamp);
+              await AsyncStorage.setItem('log_cleared_timestamp', clearTimestamp);
+              
+              console.log('Log cleared successfully');
             } catch (error) {
               console.error('Failed to clear log', error);
+              Alert.alert("Error", "Failed to clear log. Please try again.");
             }
           } 
         }
@@ -159,9 +206,72 @@ export default function LogScreen() {
   // Ensure data updates when navigating back to the log page
   useFocusEffect(
     useCallback(() => {
-      loadLog();
-    }, [])
+      if (!isLoading) {
+        loadLog();
+      }
+    }, [isLoading])
   );
+
+  // Set up a listener for changes in meals
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const lastUpdateStr = await AsyncStorage.getItem('meals_updated_timestamp');
+        if (lastUpdateStr && !isLoading) {
+          loadLog();
+        }
+      } catch (error) {
+        console.error('Error checking for updates:', error);
+      }
+    };
+    
+    // Check once on mount
+    checkForUpdates();
+    
+    // Listen for app state changes (like when app comes back from background)
+    const interval = setInterval(checkForUpdates, 3000); // Check every 3 seconds
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isLoading]);
+
+  // Generate a safe key for the FlatList items
+  const getItemKey = (item, index) => {
+    return item && item.id ? item.id.toString() : `meal-${index}`;
+  };
+
+  // This render item function matches the original format
+  const renderMealItem = ({ item }) => {
+    if (!item) return null;
+    
+    return (
+      <View style={styles.mealCard}>
+        <Text style={styles.mealName}>{item.name}</Text>
+        
+        {item.associatedMeal ? (
+          <>
+            <Text style={styles.mealDetails}>
+              <Text style={styles.boldText}>Meal:</Text> {item.associatedMeal.name}
+            </Text>
+            <Text style={styles.mealDetails}>
+              <Text style={styles.boldText}>Health Rating:</Text> {item.associatedMeal.rating}/10
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.mealDetails}>
+            <Text style={styles.boldText}>Health Rating:</Text> {item.rating}/10
+          </Text>
+        )}
+        
+        {item.timeChecked && (
+          <Text style={styles.mealDetails}>
+            <Text style={styles.boldText}>Logged at:</Text> {item.timeChecked}
+          </Text>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -178,40 +288,16 @@ export default function LogScreen() {
         )}
       </View>
       
-      {todaysMeals.length === 0 ? (
+      {isLoading ? (
+        <Text style={styles.noMealsText}>Loading...</Text>
+      ) : todaysMeals.length === 0 ? (
         <Text style={styles.noMealsText}>No meals logged yet.</Text>
       ) : (
         <FlatList
-  data={todaysMeals}
-  keyExtractor={(item) => item.id.toString()}
-  renderItem={({ item }) => (
-    <View style={styles.mealCard}>
-      <Text style={styles.mealName}>{item.name}</Text>
-      
-      {item.associatedMeal ? (
-        <>
-          <Text style={styles.mealDetails}>
-            <Text style={styles.boldText}>Meal:</Text> {item.associatedMeal.name}
-          </Text>
-          <Text style={styles.mealDetails}>
-            <Text style={styles.boldText}>Health Rating:</Text> {item.associatedMeal.rating}/10
-          </Text>
-        </>
-      ) : (
-        <Text style={styles.mealDetails}>
-          <Text style={styles.boldText}>Health Rating:</Text> {item.rating}/10
-        </Text>
-      )}
-      
-      {item.timeChecked && (
-        <Text style={styles.mealDetails}>
-          <Text style={styles.boldText}>Logged at:</Text> {item.timeChecked}
-        </Text>
-      )}
-    </View>
-  )}
-/>
-
+          data={todaysMeals}
+          keyExtractor={getItemKey}
+          renderItem={renderMealItem}
+        />
       )}
     </View>
   );

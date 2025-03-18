@@ -160,40 +160,164 @@ const lastCheckedUpdate = React.useRef(null);
     if (!selectedChecklistItem || !viewingMeal) return;
   
     try {
-      // Get existing meals from storage - using STORAGE_KEY
+      // First, ensure we have the most current meal data
       const storedMeals = await AsyncStorage.getItem(STORAGE_KEY);
       let mealsData = storedMeals ? JSON.parse(storedMeals) : [];
       
-      // Find if this meal time already exists in the list
+      // Get the current log data too
+      const storedLogData = await AsyncStorage.getItem(LOG_STORAGE_KEY);
+      let logData = storedLogData ? JSON.parse(storedLogData) : [];
+      
+      // Format today's date as YYYY-MM-DD for log entries
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Find today's log entry if it exists
+      let todayLogIndex = logData.findIndex(log => log.date === today);
+      
+      // Get the current timestamp
+      const currentTime = new Date().toLocaleTimeString();
+      
+      // Create a new unique ID for this log entry
+      const newLogId = Date.now();
+      
+      // Create the log entry object first
+      const logEntry = {
+        id: newLogId,
+        name: selectedChecklistItem,
+        rating: viewingMeal.rating,
+        timeChecked: currentTime,
+        associatedMeal: {
+          id: viewingMeal.id,
+          name: viewingMeal.name,
+          rating: viewingMeal.rating
+        }
+      };
+      // Add this function to automatically reset checked items at end of day
+const resetCheckedItemsAtMidnight = () => {
+  // Get current time
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  // If it's midnight (00:00)
+  if (currentHour === 0 && currentMinute === 0) {
+    // Reset all checked items
+    const resetMeals = meals.map(meal => ({
+      ...meal,
+      checked: false,
+      timeChecked: undefined,
+      associatedMeal: null
+    }));
+    
+    setMeals(resetMeals);
+    
+    // Save to storage
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetMeals))
+      .then(() => {
+        console.log('All meals reset at midnight');
+        // Update the timestamp to trigger sync in other screens
+        return AsyncStorage.setItem('meals_updated_timestamp', Date.now().toString());
+      })
+      .catch(error => console.error('Failed to reset meals:', error));
+      
+    // Also clear today's log entries since all are now unchecked
+    AsyncStorage.getItem(LOG_STORAGE_KEY)
+      .then(storedLogData => {
+        if (!storedLogData) return;
+        
+        let logData = JSON.parse(storedLogData);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+        
+        // Keep all logs except yesterday's
+        logData = logData.filter(log => log.date !== yesterdayFormatted);
+        
+        return AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
+      })
+      .catch(error => console.error('Failed to update log data:', error));
+  }
+};
+
+// Add this useEffect hook to check time periodically
+useEffect(() => {
+  // Check every minute if we need to reset
+  const intervalId = setInterval(resetCheckedItemsAtMidnight, 60000);
+  
+  // Clean up interval on unmount
+  return () => clearInterval(intervalId);
+}, [meals]);
+      // Find if this meal time already exists in the list and update it
       const existingIndex = mealsData.findIndex(meal => meal.name === selectedChecklistItem);
       
       if (existingIndex >= 0) {
         // Update existing meal time entry
         mealsData[existingIndex] = {
           ...mealsData[existingIndex],
+          id: newLogId, // Use the same ID as the log entry
           checked: true,
           rating: viewingMeal.rating,
-          timeChecked: new Date().toLocaleTimeString()
+          timeChecked: currentTime,
+          // Store associated meal information
+          associatedMeal: {
+            id: viewingMeal.id,
+            name: viewingMeal.name,
+            rating: viewingMeal.rating
+          }
         };
       } else {
         // Add new meal time entry
         mealsData.push({
-          id: Date.now(),
+          id: newLogId, // Use the same ID as the log entry
           name: selectedChecklistItem,
           checked: true,
           editing: false,
           rating: viewingMeal.rating,
-          timeChecked: new Date().toLocaleTimeString()
+          timeChecked: currentTime,
+          // Store associated meal information
+          associatedMeal: {
+            id: viewingMeal.id,
+            name: viewingMeal.name,
+            rating: viewingMeal.rating
+          }
         });
       }
       
-      // Save the updated meals back to storage
+      // Save the corresponding log entry
+      if (todayLogIndex >= 0) {
+        // If today's log exists, get it
+        let todayLog = logData[todayLogIndex];
+        
+        // Check if this meal item already exists in the log
+        const existingMealIndex = todayLog.meals.findIndex(m => m.name === selectedChecklistItem);
+        
+        if (existingMealIndex >= 0) {
+          // Update existing meal in today's log
+          todayLog.meals[existingMealIndex] = logEntry;
+        } else {
+          // Add new meal to today's log
+          todayLog.meals.push(logEntry);
+        }
+        
+        // Update log data
+        logData[todayLogIndex] = todayLog;
+      } else {
+        // Create new log for today with this meal
+        logData.push({
+          date: today,
+          meals: [logEntry]
+        });
+      }
+      
+      // Save both updated data stores
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mealsData));
+      await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
       
-      // NOTE: We've removed the LOG_STORAGE_KEY update from here
-      // The ChecklistScreen component will handle that part
+      // Force refresh by updating the timestamp
+      const updateTimestamp = Date.now().toString();
+      await AsyncStorage.setItem('meals_updated_timestamp', updateTimestamp);
       
-      console.log(`Successfully updated ${selectedChecklistItem} with ${viewingMeal.name}`);
+      console.log(`Successfully logged ${selectedChecklistItem} with ${viewingMeal.name}`);
     } catch (error) {
       console.error("Error updating meal:", error);
     }
@@ -255,12 +379,14 @@ const updateLog = async (mealId: number) => {
         m => m.id === mealId
       );
       
-      const logEntry = {
-        id: mealId,
-        name: mealToUpdate.name,
-        rating: mealToUpdate.rating || 5,
-        timeChecked: new Date().toLocaleTimeString()
-      };
+      // In updateLogForMeal function, modify the logEntry creation:
+const logEntry = {
+  id: meals.id,
+  name: meals.name,
+  rating: meals.rating, // This should be the exact UI value
+  timeChecked: meals.timeChecked || new Date().toLocaleTimeString(),
+  associatedMeal: meals.associatedMeal || null
+};
       
       if (existingMealIndex >= 0) {
         // Update existing entry
@@ -333,6 +459,8 @@ const onRefresh = React.useCallback(() => {
   // Toggle check status
 // In ChecklistScreen (index.tsx)
 // Modified toggleCheck function to preserve meal info
+// Toggle check status
+// Toggle check status
 const toggleCheck = (id: number) => {
   // First update the meals state
   const updatedMeals = meals.map(meal => {
@@ -342,7 +470,9 @@ const toggleCheck = (id: number) => {
         ...meal, 
         checked: newCheckedState, 
         rating: newCheckedState ? (meal.rating || 5) : 0,
-        timeChecked: newCheckedState ? new Date().toLocaleTimeString() : undefined
+        timeChecked: newCheckedState ? new Date().toLocaleTimeString() : undefined,
+        // Remove associatedMeal when unchecking
+        associatedMeal: newCheckedState ? meal.associatedMeal : null
       };
     }
     return meal;
@@ -358,7 +488,7 @@ const toggleCheck = (id: number) => {
   }
 };
 
-// Updated updateLogForMeal to preserve meal association
+// Update the updateLogForMeal function to also clear associatedMeal when unchecking
 const updateLogForMeal = async (meal: { id: any; name: any; checked: any; editing?: boolean; rating: any; timeChecked: any; associatedMeal?: any; }) => {
   try {
     // Get existing log data
@@ -391,12 +521,12 @@ const updateLogForMeal = async (meal: { id: any; name: any; checked: any; editin
         rating: meal.rating || 5,
         timeChecked: meal.timeChecked || new Date().toLocaleTimeString(),
         // Preserve associatedMeal if it exists
-        associatedMeal: meal.associatedMeal || null
+        associatedMeal: meal.associatedMeal
       };
       
       if (existingMealIndex >= 0) {
-        // Update existing entry but preserve associatedMeal if it exists
-        if (todayLog.meals[existingMealIndex].associatedMeal) {
+        // Update existing entry but preserve associatedMeal if it exists and we're not clearing it
+        if (todayLog.meals[existingMealIndex].associatedMeal && meal.associatedMeal !== null) {
           logEntry.associatedMeal = todayLog.meals[existingMealIndex].associatedMeal;
         }
         todayLog.meals[existingMealIndex] = logEntry;
@@ -409,7 +539,7 @@ const updateLogForMeal = async (meal: { id: any; name: any; checked: any; editin
       logData[todayLogIndex] = todayLog;
     } else {
       // Remove the meal from today's log
-      todayLog.meals = todayLog.meals.filter((m: { id: any; }) => m.id !== meal.id);
+      todayLog.meals = todayLog.meals.filter(m => m.id !== meal.id);
       
       // If today's log is now empty, remove it completely
       if (todayLog.meals.length === 0) {
@@ -422,6 +552,26 @@ const updateLogForMeal = async (meal: { id: any; name: any; checked: any; editin
     
     // Save updated log data
     await AsyncStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logData));
+    
+    // Update meals data to ensure consistency
+    const storedMeals = await AsyncStorage.getItem(STORAGE_KEY);
+    if (storedMeals) {
+      const mealsData = JSON.parse(storedMeals);
+      const mealIndex = mealsData.findIndex((m: { id: any; }) => m.id === meal.id);
+      
+      if (mealIndex >= 0) {
+        // Update the meal in storage to match our current state
+        mealsData[mealIndex] = {
+          ...mealsData[mealIndex],
+          checked: meal.checked,
+          rating: meal.rating,
+          timeChecked: meal.timeChecked,
+          associatedMeal: meal.associatedMeal // This will be null when unchecked
+        };
+        
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(mealsData));
+      }
+    }
     
     // Update the timestamp to trigger sync in other screens
     await AsyncStorage.setItem('meals_updated_timestamp', Date.now().toString());
